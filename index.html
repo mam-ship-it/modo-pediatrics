@@ -987,7 +987,7 @@ const pgs=i=>{const a=CH[i].p[0]-1,b=CH[i].p[1]-1,r=[];for(let n=a;n<=b;n++)if(P
 const pool=()=>CH.flatMap((c,i)=>c.q.map(q=>[q[0],q[1],q[2],i,q[3]]));
 function nav(){let h=`<button class="si ${st.v==="home"?"on":""}" onclick="go('home')"><span class="ico">🏠</span>الرئيسية</button><div class="sgrp">🧒 الإجراءات التمريضية</div>`;
 CH.forEach((c,i)=>h+=`<button class="si ${st.v===i?"on":""}" onclick="go(${i})"><span class="ico">${c.ic}</span><span style="flex:1;font-size:.88rem">${N(c)}</span><small>${pct(i)}%</small></button>`);
-h+=`<div class="sgrp">🎯 أدوات</div><button class="si ${st.v==="exam"?"on":""}" onclick="go('exam')"><span class="ico">📝</span>اختبار شامل</button><button class="si ${st.v==="gloss"?"on":""}" onclick="go('gloss')"><span class="ico">🔤</span>الاختصارات الطبية</button><button class="si ${st.v==="ai"?"on":""}" onclick="go('ai')"><span class="ico">🤖</span>المساعد الذكي</button><button class="si ${st.v==="sheet"?"on":""}" onclick="go('sheet')"><span class="ico">📋</span>مساعد الشيتات</button><button class="si ${st.v==="stats"?"on":""}" onclick="go('stats')"><span class="ico">📈</span>إنجازاتي</button><button class="si ${st.v==="sim"?"on":""}" onclick="go('sim')"><span class="ico">🧊</span>محاكاة 3D</button><button class="si ${st.v==="bank"?"on":""}" onclick="go('bank')"><span class="ico">🏦</span>بنك الأسئلة</button><button class="si ${st.v==="calc"?"on":""}" onclick="go('calc')"><span class="ico">🧮</span>حاسبات الأطفال</button>`;
+h+=`<div class="sgrp">🎯 أدوات</div><button class="si ${st.v==="exam"?"on":""}" onclick="go('exam')"><span class="ico">📝</span>اختبار شامل</button><button class="si ${st.v==="gloss"?"on":""}" onclick="go('gloss')"><span class="ico">🔤</span>الاختصارات الطبية</button><button class="si ${st.v==="ai"?"on":""}" onclick="go('ai')"><span class="ico">🤖</span>المساعد الذكي</button><button class="si ${st.v==="sheet"?"on":""}" onclick="go('sheet')"><span class="ico">📋</span>مساعد الشيتات</button><button class="si ${st.v==="stats"?"on":""}" onclick="go('stats')"><span class="ico">📈</span>إنجازاتي</button><button class="si ${st.v==="sim"?"on":""}" onclick="go('sim')"><span class="ico">🧊</span>محاكاة 3D</button><button class="si ${st.v==="bank"?"on":""}" onclick="go('bank')"><span class="ico">🏦</span>بنك الأسئلة</button><button class="si ${st.v==="calc"?"on":""}" onclick="go('calc')"><span class="ico">🧮</span>حاسبات الأطفال</button><button class="si ${st.v==="wb"?"on":""}" onclick="go('wb')"><span class="ico">🧑‍🏫</span>السبورة التفاعلية</button>`;
 $("#nav").innerHTML=h;
 {const cs=CH.map((c,i)=>`<button class="chip ${st.v===i?"on":""}" onclick="go(${i})"><small>${c.ic} ${i+1}</small><b>${N(c)}</b></button>`).join("");$("#chips").innerHTML='<div class="mqt">'+cs+cs.replace(/<button /g,'<button aria-hidden="true" tabindex="-1" ')+'</div>'}}
 function go(v){clearInterval(SUI);SU.run=0;SL=null;BL=null;ICL=null;IC.sel=null;if(typeof v==="number")try{localStorage.setItem("modo_last",v)}catch(e){}clearTimeout(CPI);OT=null;CT=null;vstop();NV=null;dkClear();DG=null;PL=null;FC=null;st.ox=null;st.go=st.gm=st.gt=null;st.vrt=null;st.vri=null;st.vrx=null;st.vi=0;st.v=v;st.tab="lesson";st.pg=0;st.fc=0;st.flip=0;st.qi=0;st.qa=null;st.sc=0;st.q=null;toggleSide(false);render();scrollTo(0,0)}
@@ -1026,8 +1026,8 @@ function ans(j,c){if(st.qa!==null)return;st.qa=j;if(j===c)st.sc++;render()}
 function exam(){const P=pool();if(!st.ex||!st.exr){st.ex=P.sort(()=>Math.random()-.5).slice(0,20);st.exr=1}return`<h2>📝 اختبار شامل</h2><p class="sub">20 سؤال عشوائي من كل الإجراءات</p>`+quiz(st.ex,"exam")}
 function gloss(){return`<h2>🔤 الاختصارات الطبية</h2><p class="sub">Medical Terminology Abbreviation</p><div class="aiin" style="margin-bottom:12px"><input id="gq" placeholder="ابحث…" oninput="gl(this.value)"></div><div class="tw"><table class="tb" dir="ltr"><tbody id="gb"></tbody></table></div>`}
 function gl(q){q=(q||"").toLowerCase();$("#gb").innerHTML=GL.filter(r=>(r[0]+r[1]).toLowerCase().includes(q)).map(r=>`<tr><td><b>${E(r[0])}</b></td><td>${E(r[1])}</td></tr>`).join("")}
-function render(){clearInterval(window.LBT);clearInterval(window.LBM);if(!auth()){nav();$("#ttl").textContent="MODO AI";const ch=$("#chips");if(ch)ch.innerHTML="";$("#view").innerHTML=st.lang==="en"?'<div class="lockpane"><div style="font-size:3rem">🔒</div><h2>Subscribers only</h2><p class="sub">One subscription of <b>EGP 100</b> — paid once — unlocks the whole platform.</p><button class="btn" onclick="MODOGATE.open(\'r\')">Subscribe — EGP 100</button><button class="btn alt" onclick="MODOGATE.open(\'l\')">I have a code · Log in</button></div>':'<div class="lockpane"><div style="font-size:3rem">🔒</div><h2>المنصة بالاشتراك فقط</h2><p class="sub">اشتراك واحد بـ <b>100 جنيه</b> — مرة واحدة — يفتح كل المنصة.</p><button class="btn" onclick="MODOGATE.open(\'r\')">اشترك — 100 جنيه</button><button class="btn alt" onclick="MODOGATE.open(\'l\')">عندي كود · سجّل دخول</button></div>';return}nav();const v=st.v;$("#ttl").innerHTML=v==="home"?"لوحة التحكم<small>مدرّس التمريض الذكي – الأطفال</small>":v==="exam"?"اختبار شامل":v==="gloss"?"الاختصارات":v==="ai"?"المساعد الذكي":v==="sheet"?"مساعد الشيتات":v==="vr"?"البيئة الافتراضية":v==="calc"?L("حاسبات الأطفال","Pediatric calculators"):v==="msg"?L("رسائل للإدارة","Messages to admin"):v==="bank"?"بنك الأسئلة":v==="sim"?"المحاكاة ثلاثية الأبعاد":v==="stats"?"إنجازاتي":N(CH[v])+"<small>"+N2(CH[v])+"</small>";
-const pn=$("#view");pn.className="panel"+(v==="home"?" plain":"");pn.innerHTML=v==="home"?home():v==="exam"?exam():v==="gloss"?gloss():v==="ai"?ai():v==="sheet"?sheets():v==="vr"?vr():v==="msg"?msgView():v==="calc"?calcView():v==="bank"?bankView():v==="sim"?simView():v==="stats"?statsView():chapter(v);if(v==="gloss")gl("");tx()}
+function render(){clearInterval(window.LBT);clearInterval(window.LBM);if(!auth()){nav();$("#ttl").textContent="MODO AI";const ch=$("#chips");if(ch)ch.innerHTML="";$("#view").innerHTML=st.lang==="en"?'<div class="lockpane"><div style="font-size:3rem">🔒</div><h2>Subscribers only</h2><p class="sub">One subscription of <b>EGP 100</b> — paid once — unlocks the whole platform.</p><button class="btn" onclick="MODOGATE.open(\'r\')">Subscribe — EGP 100</button><button class="btn alt" onclick="MODOGATE.open(\'l\')">I have a code · Log in</button></div>':'<div class="lockpane"><div style="font-size:3rem">🔒</div><h2>المنصة بالاشتراك فقط</h2><p class="sub">اشتراك واحد بـ <b>100 جنيه</b> — مرة واحدة — يفتح كل المنصة.</p><button class="btn" onclick="MODOGATE.open(\'r\')">اشترك — 100 جنيه</button><button class="btn alt" onclick="MODOGATE.open(\'l\')">عندي كود · سجّل دخول</button></div>';return}nav();const v=st.v;$("#ttl").innerHTML=v==="home"?"لوحة التحكم<small>مدرّس التمريض الذكي – الأطفال</small>":v==="exam"?"اختبار شامل":v==="gloss"?"الاختصارات":v==="ai"?"المساعد الذكي":v==="sheet"?"مساعد الشيتات":v==="vr"?"البيئة الافتراضية":v==="calc"?L("حاسبات الأطفال","Pediatric calculators"):v==="wb"?L("السبورة التفاعلية","Interactive whiteboard"):v==="msg"?L("رسائل للإدارة","Messages to admin"):v==="bank"?"بنك الأسئلة":v==="sim"?"المحاكاة ثلاثية الأبعاد":v==="stats"?"إنجازاتي":N(CH[v])+"<small>"+N2(CH[v])+"</small>";
+const pn=$("#view");pn.className="panel"+(v==="home"?" plain":"");pn.innerHTML=v==="home"?home():v==="exam"?exam():v==="gloss"?gloss():v==="ai"?ai():v==="sheet"?sheets():v==="vr"?vr():v==="wb"?window.wbView():v==="msg"?msgView():v==="calc"?calcView():v==="bank"?bankView():v==="sim"?simView():v==="stats"?statsView():chapter(v);if(v==="gloss")gl("");tx()}
 function theme(){st.dark=!st.dark;document.documentElement.dataset.theme=st.dark?"dark":"light";save()}
 
 const XQ={
@@ -2672,4 +2672,462 @@ new MutationObserver(inject).observe(document.body,{childList:true,subtree:true}
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&document.getElementById("amP")){e.stopPropagation();closeP()}},true);
 })();
 </script>
+<style id="wb-css">
+.wb{direction:rtl}
+.wb-tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.wb-tabs button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:8px 16px;font-weight:800}
+.wb-tabs button.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+.wb-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+.wb-b{min-width:40px;height:40px;padding:0 10px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;font-size:1.1rem;font-weight:800;line-height:1}
+.wb-b:hover{border-color:var(--teal)}
+.wb-b.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+.wb-b.txt{font-size:.85rem}
+.wb-b.rec{background:#d92d3a;color:#fff;border-color:#d92d3a}
+.wb-b.rec.live{animation:wbp 1.2s infinite}
+@keyframes wbp{50%{opacity:.65}}
+.wb-sep{width:1px;height:28px;background:var(--line);margin:0 4px}
+.wb-sw{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);padding:0}
+.wb-sw.on{outline:3px solid var(--teal);outline-offset:1px}
+.wb-row label{font-size:.85rem;color:var(--mute);display:flex;align-items:center;gap:6px}
+.wb-row select,.wb-row input[type=text]{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 8px;font:inherit}
+.wb-st{display:flex;flex-wrap:wrap;gap:4px;padding:8px;border:1px dashed var(--line);border-radius:10px;margin-bottom:8px}
+.wb-st button{border:1px solid transparent;background:transparent;font-size:1.5rem;border-radius:8px;padding:2px 6px}
+.wb-st button.on{border-color:var(--teal);background:var(--bg)}
+.wb-stage{display:flex;justify-content:center;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:8px}
+#wbCW{position:relative;display:inline-block;line-height:0;max-width:100%}
+.wb-cv{display:block;max-width:100%;max-height:calc(100vh - 360px);min-height:220px;width:auto;height:auto;border-radius:8px;touch-action:none;box-shadow:0 4px 18px #0003;cursor:crosshair;background:#fff}
+.wb-ta{position:absolute;min-width:200px;width:40%;background:#ffffff22;border:1px dashed #1f7ae0;outline:0;resize:none;font-family:Cairo,sans-serif;font-weight:700;line-height:1.3;padding:0;margin:0;overflow:hidden;z-index:3}
+.wb-hint{font-size:.8rem;color:var(--mute);margin:6px 2px;line-height:1.7}
+.wb-arc{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.wb-card{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;overflow:hidden}
+.wb-card .th{position:relative;aspect-ratio:16/9;background:#1f4d3a center/cover no-repeat}
+.wb-card .du{position:absolute;bottom:6px;left:6px;background:#000b;color:#fff;border-radius:6px;padding:1px 7px;font-size:.78rem}
+.wb-card .bd{padding:10px}
+.wb-card .bd b{display:block;margin-bottom:2px;word-break:break-word}
+.wb-card .bd small{color:var(--mute);display:block}
+.wb-card .ac{display:flex;gap:6px;margin-top:8px}
+.wb-card .ac button{flex:1;height:36px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;font-size:1rem}
+.wb-card .ac button:hover{border-color:var(--teal)}
+#wbDock{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:99000;display:none;flex-direction:column;gap:6px;background:#0d2247ee;color:#fff;border:1px solid #ffffff33;border-radius:16px;padding:8px 10px;box-shadow:0 8px 30px #0006;direction:rtl;font-family:Cairo,sans-serif;max-width:96vw}
+#wbDock .dk-r{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap}
+#wbDock button{background:#ffffff1f;color:#fff;border:1px solid #ffffff33;border-radius:10px;height:36px;min-width:36px;padding:0 10px;font-weight:800;font-size:.85rem}
+#wbDock button.on{background:#1f7ae0;border-color:#1f7ae0}
+#wbDock button.stop{background:#d92d3a;border-color:#d92d3a}
+#wbDock .dk-t{font-variant-numeric:tabular-nums;font-size:1rem;min-width:52px;text-align:center}
+#wbDock .dk-dot{width:12px;height:12px;border-radius:50%;background:#ff3b4a;animation:wbp 1.2s infinite}
+#wbDock .dk-dot.p{animation:none;background:#f2c500}
+#wbDock .dk-c{width:24px;height:24px;min-width:24px;border-radius:50%;padding:0;border:2px solid #fff6}
+#wbDock .grip{cursor:grab;opacity:.6;padding:0 4px}
+#wbDock [data-a=exp]{display:none}
+#wbDock.mini .dk-r:not(:first-child){display:none}
+#wbDock.mini [data-a=pause],#wbDock.mini [data-a=stop],#wbDock.mini [data-a=mic],#wbDock.mini .grip{display:none}
+#wbDock.mini [data-a=exp]{display:inline-block}
+#wbOv{position:fixed;left:0;top:0;z-index:98000;touch-action:none;display:none;cursor:crosshair}
+#wbCamB{position:fixed;left:16px;bottom:96px;width:180px;height:180px;border-radius:50%;overflow:hidden;z-index:98500;border:3px solid #fff;box-shadow:0 4px 18px #0007;background:#000;cursor:grab;touch-action:none}
+#wbCamB video{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+#wbCamB .cb{position:absolute;left:0;right:0;bottom:8px;display:none;justify-content:center;gap:6px}
+#wbCamB:hover .cb{display:flex}
+#wbCamB .cb button{width:28px;height:28px;border-radius:50%;border:0;background:#000a;color:#fff;font-size:.8rem;padding:0}
+.wb-modal{position:fixed;inset:0;z-index:99500;background:#000a;display:flex;align-items:center;justify-content:center;padding:14px;direction:rtl}
+.wb-m{background:var(--card);color:var(--ink);border-radius:16px;padding:16px;width:min(720px,100%);max-height:94vh;overflow:auto}
+.wb-m h3{margin:0 0 8px}
+.wb-m video{width:100%;max-height:60vh;background:#000;border-radius:10px}
+.wb-m input[type=text]{width:100%;margin:10px 0;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:9px 12px;font:inherit}
+.wb-m .row{display:flex;gap:8px;flex-wrap:wrap}
+.wb-m .row button{flex:1;min-width:110px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:800}
+.wb-m .row .pri{background:var(--teal);color:#fff;border-color:var(--teal)}
+.wb-toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:99600;background:#0d2247;color:#fff;border-radius:12px;padding:10px 18px;font-weight:700;box-shadow:0 6px 24px #0005;max-width:92vw;text-align:center}
+</style>
+<script id="wb-js">
+(function(){
+if(window.WB)return;
+var W=1280,H=720;
+function q(s,r){return(r||document).querySelector(s)}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function pad(n){return n<10?'0'+n:''+n}
+function fmt(ms){var s=Math.round(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60);s%=60;return(h?h+':'+pad(m):pad(m))+':'+pad(s)}
+function mb(b){return b>1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB'}
+function mkPage(){return{items:[],hist:[],redo:[],bg:'white'}}
+var WB=window.WB={tool:'pen',color:'#111111',size:4,fill:false,tab:'board',mode:'tab',sticker:'🫁',pages:[mkPage()],pi:0,sel:null,cur:null,drag:null,laser:[],spot:null,ta:null};
+var REC=null,CAM=null,OV={on:false,act:true,s:[],cur:null,tool:'pen',cv:null,cx:null,d:1};
+var MC=document.createElement('canvas').getContext('2d');
+var COLORS=['#111111','#ffffff','#e0262c','#f08c00','#f2c500','#1f9d55','#1f7ae0','#7b3fe4','#e0457b','#8b5a2b'];
+var STK=['🫁','❤️','🫀','🧠','🩺','💉','🌡️','💊','🩸','🧪','🏥','👶','🍼','🧸','😷','🧤','🩹','🚑','🦴','👂','👁️','👃','🦷','🔬','🧫','📏','⚖️','✅','❌','⚠️','⭐','❓','💡','🔥','💧'];
+var TOOLS=[['sel','🖱️','تحديد وتحريك (V)'],['pen','✏️','قلم (P)'],['hl','🖍️','ماركر (H)'],['er','🧽','ممحاة (E)'],['line','╱','خط'],['arrow','➜','سهم (A)'],['rect','▭','مستطيل (R)'],['ellipse','⬭','دائرة (O)'],['tri','△','مثلث'],['text','T','نص (T)'],['sticker','🫁','ملصقات طبية'],['laser','🔴','مؤشر ليزر (L)'],['spot','🔦','تسليط الضوء']];
+var SHAPES={line:1,arrow:1,rect:1,ellipse:1,tri:1};
+function pg(){return WB.pages[WB.pi]}
+function toast(m){var t=document.createElement('div');t.className='wb-toast';t.textContent=m;document.body.appendChild(t);setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t)},3800)}
+function download(blob,name){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},2500)}
+
+/* ---------- drawing ---------- */
+function bgDraw(c,t){
+ var f={white:'#ffffff',board:'#1f4d3a',black:'#101418',grid:'#ffffff',lines:'#fffdf5',graph:'#ffffff'};
+ c.fillStyle=f[t]||'#fff';c.fillRect(0,0,W,H);c.save();c.lineWidth=1;var x,y;
+ if(t==='grid'||t==='graph'){c.strokeStyle='#d5e1f2';c.beginPath();for(x=0;x<=W;x+=40){c.moveTo(x,0);c.lineTo(x,H)}for(y=0;y<=H;y+=40){c.moveTo(0,y);c.lineTo(W,y)}c.stroke()}
+ if(t==='graph'){c.strokeStyle='#334';c.lineWidth=2;c.beginPath();c.moveTo(W/2,0);c.lineTo(W/2,H);c.moveTo(0,H/2);c.lineTo(W,H/2);c.stroke()}
+ if(t==='lines'){c.strokeStyle='#bcd3ee';c.beginPath();for(y=80;y<H;y+=48){c.moveTo(0,y);c.lineTo(W,y)}c.stroke();c.strokeStyle='#f0a0a0';c.beginPath();c.moveTo(W-110,0);c.lineTo(W-110,H);c.stroke()}
+ c.restore()}
+function setFont(c,it){c.font='700 '+it.s+'px Cairo,"Segoe UI",Tahoma,sans-serif'}
+function isAr(s){return /[\u0600-\u06FF]/.test(s)}
+function drawItem(c,it){
+ c.save();c.lineCap='round';c.lineJoin='round';var t=it.t,i,p;
+ if(t==='pen'||t==='hl'||t==='er'){
+  c.lineWidth=t==='hl'?it.w*3:(t==='er'?it.w*4:it.w);c.strokeStyle=it.c;c.fillStyle=it.c;
+  if(t==='hl'){c.globalAlpha=.35;c.lineCap='butt'}
+  if(t==='er')c.globalCompositeOperation='destination-out';
+  p=it.p;
+  if(p.length<2){c.beginPath();c.arc(p[0][0],p[0][1],c.lineWidth/2,0,6.2832);c.fill()}
+  else{c.beginPath();c.moveTo(p[0][0],p[0][1]);
+   for(i=1;i<p.length-1;i++){c.quadraticCurveTo(p[i][0],p[i][1],(p[i][0]+p[i+1][0])/2,(p[i][1]+p[i+1][1])/2)}
+   c.lineTo(p[p.length-1][0],p[p.length-1][1]);c.stroke()}
+ }else if(SHAPES[t]){
+  c.lineWidth=it.w;c.strokeStyle=it.c;c.fillStyle=it.c;var x1=it.x1,y1=it.y1,x2=it.x2,y2=it.y2;c.beginPath();
+  if(t==='line'||t==='arrow'){c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();
+   if(t==='arrow'){var a=Math.atan2(y2-y1,x2-x1),hl=Math.max(16,it.w*4);c.beginPath();c.moveTo(x2,y2);c.lineTo(x2-hl*Math.cos(a-.45),y2-hl*Math.sin(a-.45));c.moveTo(x2,y2);c.lineTo(x2-hl*Math.cos(a+.45),y2-hl*Math.sin(a+.45));c.stroke()}}
+  else{
+   if(t==='rect')c.rect(Math.min(x1,x2),Math.min(y1,y2),Math.abs(x2-x1),Math.abs(y2-y1));
+   else if(t==='ellipse')c.ellipse((x1+x2)/2,(y1+y2)/2,Math.abs(x2-x1)/2,Math.abs(y2-y1)/2,0,0,6.2832);
+   else{c.moveTo((x1+x2)/2,Math.min(y1,y2));c.lineTo(Math.max(x1,x2),Math.max(y1,y2));c.lineTo(Math.min(x1,x2),Math.max(y1,y2));c.closePath()}
+   if(it.fill){c.globalAlpha=.25;c.fill();c.globalAlpha=1}
+   c.stroke()}
+ }else if(t==='tx'){
+  setFont(c,it);c.fillStyle=it.c;c.textBaseline='top';c.textAlign='left';c.direction=isAr(it.txt)?'rtl':'ltr';
+  it.txt.split('\n').forEach(function(l,k){c.fillText(l,it.x,it.y+k*it.s*1.3)});
+ }else if(t==='st'){
+  c.font=it.s+'px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(it.e,it.x,it.y);
+ }else if(t==='im'){try{c.drawImage(it.img,it.x,it.y,it.w,it.h)}catch(e){}}
+ c.restore()}
+function bbox(a){var t=a.t,i,x1,y1,x2,y2;
+ if(a.p){x1=y1=1e9;x2=y2=-1e9;for(i=0;i<a.p.length;i++){x1=Math.min(x1,a.p[i][0]);y1=Math.min(y1,a.p[i][1]);x2=Math.max(x2,a.p[i][0]);y2=Math.max(y2,a.p[i][1])}var r=a.w;return[x1-r,y1-r,x2+r,y2+r]}
+ if(a.x1!==undefined){return[Math.min(a.x1,a.x2)-a.w,Math.min(a.y1,a.y2)-a.w,Math.max(a.x1,a.x2)+a.w,Math.max(a.y1,a.y2)+a.w]}
+ if(t==='tx'){setFont(MC,a);var ls=a.txt.split('\n'),w=0;ls.forEach(function(l){w=Math.max(w,MC.measureText(l).width)});return[a.x,a.y,a.x+w,a.y+ls.length*a.s*1.3]}
+ if(t==='st'){var h=a.s*.6;return[a.x-h,a.y-h,a.x+h,a.y+h]}
+ return[a.x,a.y,a.x+a.w,a.y+a.h]}
+function dseg(px,py,x1,y1,x2,y2){var dx=x2-x1,dy=y2-y1,l=dx*dx+dy*dy,u=l?Math.max(0,Math.min(1,((px-x1)*dx+(py-y1)*dy)/l)):0;return Math.hypot(px-(x1+u*dx),py-(y1+u*dy))}
+function near(a,p){var x=p[0],y=p[1],i,r;
+ if(a.p){r=Math.max(8,a.w/2+6)+(a.t==='hl'?a.w*1.5:0);if(a.p.length===1)return Math.hypot(a.p[0][0]-x,a.p[0][1]-y)<=r;for(i=1;i<a.p.length;i++){if(dseg(x,y,a.p[i-1][0],a.p[i-1][1],a.p[i][0],a.p[i][1])<=r)return true}return false}
+ if(a.t==='line'||a.t==='arrow')return dseg(x,y,a.x1,a.y1,a.x2,a.y2)<=Math.max(8,a.w/2+6);
+ var b=bbox(a);return x>=b[0]-4&&x<=b[2]+4&&y>=b[1]-4&&y<=b[3]+4}
+function hit(p){var it=pg().items;for(var i=it.length-1;i>=0;i--){if(it[i].t==='er')continue;if(near(it[i],p))return it[i]}return null}
+function move(a,dx,dy){if(a.p){a.p.forEach(function(k){k[0]+=dx;k[1]+=dy})}else if(a.x1!==undefined){a.x1+=dx;a.y1+=dy;a.x2+=dx;a.y2+=dy}else{a.x+=dx;a.y+=dy}}
+
+/* ---------- canvases ---------- */
+var cv=document.createElement('canvas');cv.width=W;cv.height=H;cv.className='wb-cv';var cx=cv.getContext('2d');
+var layer=document.createElement('canvas');layer.width=W;layer.height=H;var lx=layer.getContext('2d');
+var tmp=document.createElement('canvas');tmp.width=W;tmp.height=H;var tc=tmp.getContext('2d');
+WB.cv=cv;
+function rebuildLayer(skip){lx.clearRect(0,0,W,H);pg().items.forEach(function(i){if(i!==skip)drawItem(lx,i)})}
+function compose(){
+ var c=cx,cur=WB.cur,n=Date.now(),i;
+ c.clearRect(0,0,W,H);bgDraw(c,pg().bg);
+ if(cur&&cur.t==='er'){tc.clearRect(0,0,W,H);tc.drawImage(layer,0,0);drawItem(tc,cur);c.drawImage(tmp,0,0)}
+ else{c.drawImage(layer,0,0);if(cur)drawItem(c,cur)}
+ if(WB.drag)drawItem(c,WB.drag.it);
+ if(WB.sel&&pg().items.indexOf(WB.sel)>-1){var b=bbox(WB.sel);c.save();c.setLineDash([8,6]);c.lineWidth=2;c.strokeStyle='#1f7ae0';c.strokeRect(b[0]-6,b[1]-6,b[2]-b[0]+12,b[3]-b[1]+12);c.restore()}
+ if(WB.tool==='spot'&&WB.spot){c.save();c.fillStyle='rgba(0,0,0,.62)';c.beginPath();c.rect(0,0,W,H);c.arc(WB.spot[0],WB.spot[1],130,0,6.2832,true);c.fill('evenodd');c.restore()}
+ if(WB.laser.length){c.save();c.lineCap='round';c.lineJoin='round';
+  for(i=1;i<WB.laser.length;i++){var a=1-(n-WB.laser[i].t)/900;if(a<=0)continue;c.strokeStyle='rgba(255,40,40,'+a.toFixed(2)+')';c.lineWidth=7;c.beginPath();c.moveTo(WB.laser[i-1].x,WB.laser[i-1].y);c.lineTo(WB.laser[i].x,WB.laser[i].y);c.stroke()}
+  var l=WB.laser[WB.laser.length-1];if(n-l.t<900){c.shadowColor='#ff2828';c.shadowBlur=18;c.fillStyle='#ff3030';c.beginPath();c.arc(l.x,l.y,10,0,6.2832);c.fill()}c.restore()}
+}
+function laserAdd(p){WB.laser.push({x:p[0],y:p[1],t:Date.now()});if(!WB.ll)laserLoop()}
+function laserLoop(){WB.ll=1;var n=Date.now();WB.laser=WB.laser.filter(function(a){return n-a.t<900});compose();if(WB.laser.length)setTimeout(laserLoop,40);else WB.ll=0}
+function push(a){var p=pg();p.hist.push(a);p.redo=[]}
+function addItem(it){pg().items.push(it);drawItem(lx,it);push({k:'add',it:it});compose();wbUI()}
+function undo(){var p=pg(),a=p.hist.pop();if(!a)return;
+ if(a.k==='add'){var i=p.items.indexOf(a.it);if(i>-1)p.items.splice(i,1)}
+ else if(a.k==='del')p.items.splice(Math.min(a.i,p.items.length),0,a.it);
+ else if(a.k==='mv')move(a.it,-a.dx,-a.dy);
+ else if(a.k==='clr')p.items=a.items.slice();
+ p.redo.push(a);WB.sel=null;rebuildLayer();compose();wbUI()}
+function redo(){var p=pg(),a=p.redo.pop();if(!a)return;
+ if(a.k==='add')p.items.push(a.it);
+ else if(a.k==='del'){var i=p.items.indexOf(a.it);if(i>-1)p.items.splice(i,1)}
+ else if(a.k==='mv')move(a.it,a.dx,a.dy);
+ else if(a.k==='clr')p.items=[];
+ p.hist.push(a);WB.sel=null;rebuildLayer();compose();wbUI()}
+function delSel(){var p=pg(),a=WB.sel;if(!a)return;var i=p.items.indexOf(a);if(i<0)return;p.items.splice(i,1);push({k:'del',it:a,i:i});WB.sel=null;rebuildLayer();compose();wbUI()}
+function pos(e){var r=cv.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]}
+
+cv.addEventListener('pointerdown',function(e){
+ if(e.button>0)return;closeText(true);var p=pos(e),t=WB.tool;WB.down=true;
+ try{cv.setPointerCapture(e.pointerId)}catch(_){}
+ if(t==='pen'||t==='hl'||t==='er')WB.cur={t:t,c:WB.color,w:WB.size,p:[p]};
+ else if(SHAPES[t])WB.cur={t:t,c:WB.color,w:WB.size,fill:WB.fill,x1:p[0],y1:p[1],x2:p[0],y2:p[1]};
+ else if(t==='text'){WB.down=false;openText(p)}
+ else if(t==='sticker'){WB.down=false;addItem({t:'st',e:WB.sticker,s:WB.size*8+40,x:p[0],y:p[1]})}
+ else if(t==='sel'){var h=hit(p);WB.sel=h;if(h){rebuildLayer(h);WB.drag={it:h,lx:p[0],ly:p[1],tx:0,ty:0}}}
+ else if(t==='laser')laserAdd(p);
+ else if(t==='spot')WB.spot=p;
+ compose();wbUI();e.preventDefault()});
+cv.addEventListener('pointermove',function(e){
+ var p=pos(e),t=WB.tool;
+ if(t==='laser'){laserAdd(p);return}
+ if(t==='spot'){WB.spot=p;compose();return}
+ if(!WB.down)return;
+ if(WB.cur){var c=WB.cur;
+  if(c.p){var l=c.p[c.p.length-1];if(Math.hypot(p[0]-l[0],p[1]-l[1])>1.5)c.p.push(p)}
+  else{c.x2=p[0];c.y2=p[1]}}
+ else if(WB.drag){var d=WB.drag,dx=p[0]-d.lx,dy=p[1]-d.ly;move(d.it,dx,dy);d.lx=p[0];d.ly=p[1];d.tx+=dx;d.ty+=dy}
+ compose();e.preventDefault()});
+function endPtr(){
+ if(!WB.down)return;WB.down=false;
+ if(WB.cur){var c=WB.cur;WB.cur=null;
+  if(SHAPES[c.t]&&Math.abs(c.x2-c.x1)<3&&Math.abs(c.y2-c.y1)<3){compose();return}
+  addItem(c);return}
+ if(WB.drag){var d=WB.drag;WB.drag=null;rebuildLayer();if(d.tx||d.ty)push({k:'mv',it:d.it,dx:d.tx,dy:d.ty});compose()}}
+cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
+cv.addEventListener('pointerleave',function(){if(WB.spot){WB.spot=null;compose()}});
+cv.addEventListener('dragover',function(e){e.preventDefault()});
+cv.addEventListener('drop',function(e){e.preventDefault();var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];if(f&&/^image\//.test(f.type))addImg(f)});
+
+function openText(p){var cw=q('#wbCW');if(!cw)return;var ta=document.createElement('textarea');ta.className='wb-ta';ta.dir='auto';ta.rows=1;
+ var sc=cv.getBoundingClientRect().width/W,fs=WB.size*5+14;
+ ta.style.cssText='left:'+(p[0]/W*100)+'%;top:'+(p[1]/H*100)+'%;font-size:'+(fs*sc)+'px;color:'+WB.color+';';ta.placeholder='اكتب…';cw.appendChild(ta);ta.focus();
+ ta.oninput=function(){ta.style.height='auto';ta.style.height=ta.scrollHeight+'px'};
+ ta.onkeydown=function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();closeText(true)}else if(e.key==='Escape')closeText(false)};
+ ta.onblur=function(){closeText(true)};WB.ta={el:ta,p:p,s:fs,c:WB.color}}
+function closeText(ok){var t=WB.ta;if(!t)return;WB.ta=null;var v=t.el.value;t.el.onblur=null;if(t.el.parentNode)t.el.parentNode.removeChild(t.el);if(ok&&v.trim())addItem({t:'tx',txt:v,x:t.p[0],y:t.p[1],s:t.s,c:t.c})}
+function addImg(file){var fr=new FileReader();fr.onload=function(){var im=new Image();im.onload=function(){var s=Math.min(1,640/im.width,480/im.height),w=im.width*s,h=im.height*s;
+ var it={t:'im',img:im,x:(W-w)/2,y:(H-h)/2,w:w,h:h};addItem(it);WB.tool='sel';WB.sel=it;compose();wbUI()};im.src=fr.result};fr.readAsDataURL(file)}
+
+/* ---------- toolbar actions ---------- */
+function isDark(t){return t==='board'||t==='black'}
+function setTool(t){closeText(true);WB.tool=t;if(t!=='sel')WB.sel=null;WB.spot=null;compose();wbUI()}
+function setColor(c){WB.color=c;if(WB.sel&&WB.sel.c!==undefined&&WB.sel.t!=='im'){WB.sel.c=c;rebuildLayer();compose()}wbUI()}
+function setSize(v){WB.size=+v;var s=WB.sel;if(s){if(s.t==='st'){s.s=WB.size*8+40;rebuildLayer();compose()}else if(s.t==='tx'){s.s=WB.size*5+14;rebuildLayer();compose()}}wbUI()}
+function setBg(t){pg().bg=t;if(isDark(t)&&WB.color==='#111111')WB.color='#ffffff';else if(!isDark(t)&&WB.color==='#ffffff')WB.color='#111111';compose();wbUI()}
+function act(a){
+ var p=pg();
+ if(a==='undo')undo();else if(a==='redo')redo();else if(a==='del')delSel();
+ else if(a==='clr'){if(!p.items.length)return;if(!confirm('مسح الصفحة بالكامل؟'))return;push({k:'clr',items:p.items.slice()});p.items=[];WB.sel=null;rebuildLayer();compose();wbUI()}
+ else if(a==='padd'){WB.pages.splice(WB.pi+1,0,mkPage());WB.pi++;pageChanged()}
+ else if(a==='pprev'){if(WB.pi>0){WB.pi--;pageChanged()}}
+ else if(a==='pnext'){if(WB.pi<WB.pages.length-1){WB.pi++;pageChanged()}}
+ else if(a==='pdel'){if(WB.pages.length<2){act('clr');return}if(!confirm('حذف هذه الصفحة؟'))return;WB.pages.splice(WB.pi,1);WB.pi=Math.min(WB.pi,WB.pages.length-1);pageChanged()}
+ else if(a==='img'){var f=q('#wbFile');if(f)f.click()}
+ else if(a==='png'){cv.toBlob(function(b){download(b,'MODO-board-'+Date.now()+'.png')})}
+ else if(a==='cam')toggleCam();
+ else if(a==='ov')ovSet(!OV.on);
+ else if(a==='rec'){REC?stopRec():startRec(q('#wbMode')?q('#wbMode').value:WB.mode)}
+ else if(a==='pause')pauseRec();
+}
+function pageChanged(){WB.sel=null;WB.cur=null;closeText(false);rebuildLayer();compose();wbUI()}
+
+/* ---------- overlay: draw over the whole platform ---------- */
+function ovEnsure(){if(OV.cv)return;var c=document.createElement('canvas');c.id='wbOv';document.body.appendChild(c);OV.cv=c;OV.cx=c.getContext('2d');ovSize();addEventListener('resize',ovSize);
+ c.addEventListener('pointerdown',function(e){if(!OV.on||!OV.act)return;try{c.setPointerCapture(e.pointerId)}catch(_){}OV.cur={t:OV.tool,c:WB.color,w:WB.size,p:[[e.clientX,e.clientY]]};ovDraw();e.preventDefault()});
+ c.addEventListener('pointermove',function(e){if(!OV.cur)return;var l=OV.cur.p[OV.cur.p.length-1];if(Math.hypot(e.clientX-l[0],e.clientY-l[1])>1.5)OV.cur.p.push([e.clientX,e.clientY]);ovDraw();e.preventDefault()});
+ function up(){if(OV.cur){OV.s.push(OV.cur);OV.cur=null;ovDraw()}}
+ c.addEventListener('pointerup',up);c.addEventListener('pointercancel',up)}
+function ovSize(){if(!OV.cv)return;var d=window.devicePixelRatio||1,w=innerWidth,h=innerHeight;OV.d=d;OV.cv.width=w*d;OV.cv.height=h*d;OV.cv.style.width=w+'px';OV.cv.style.height=h+'px';ovDraw()}
+function ovDraw(){var c=OV.cx;if(!c)return;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,OV.cv.width,OV.cv.height);c.setTransform(OV.d,0,0,OV.d,0,0);OV.s.forEach(function(i){drawItem(c,i)});if(OV.cur)drawItem(c,OV.cur)}
+function ovPE(){if(!OV.cv)return;OV.cv.style.pointerEvents=(OV.on&&OV.act)?'auto':'none';OV.cv.style.display=(OV.on||OV.s.length)?'block':'none'}
+function ovSet(on){ovEnsure();OV.on=!!on;OV.act=true;ovPE();dockUpdate();wbUI()}
+function ovClear(){OV.s=[];OV.cur=null;ovDraw();ovPE()}
+
+/* ---------- camera ---------- */
+async function camOn(){
+ if(CAM)return;var s;
+ try{s=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480},facingMode:'user'},audio:false})}catch(e){toast('تعذّر فتح الكاميرا — اسمح بالوصول من إعدادات المتصفح');return}
+ var b=document.createElement('div');b.id='wbCamB';b.innerHTML='<video autoplay muted playsinline></video><div class="cb"><button data-c="sz" title="تغيير الحجم">⤢</button><button data-c="x" title="إغلاق الكاميرا">✕</button></div>';
+ document.body.appendChild(b);var v=q('video',b);v.srcObject=s;
+ CAM={s:s,b:b,v:v,sz:1};var SZ=[120,180,270],dr=null;
+ b.addEventListener('pointerdown',function(e){if(e.target.closest('button'))return;var r=b.getBoundingClientRect();dr=[e.clientX-r.left,e.clientY-r.top];b.setPointerCapture(e.pointerId);b.style.cursor='grabbing'});
+ b.addEventListener('pointermove',function(e){if(!dr)return;var x=Math.max(0,Math.min(innerWidth-b.offsetWidth,e.clientX-dr[0])),y=Math.max(0,Math.min(innerHeight-b.offsetHeight,e.clientY-dr[1]));b.style.left=x+'px';b.style.top=y+'px';b.style.bottom='auto'});
+ b.addEventListener('pointerup',function(){dr=null;b.style.cursor='grab'});
+ b.addEventListener('click',function(e){var k=e.target.closest('button');if(!k)return;if(k.dataset.c==='x')camOff();else{CAM.sz=(CAM.sz+1)%3;b.style.width=b.style.height=SZ[CAM.sz]+'px'}});
+ wbUI();dockUpdate()}
+function camOff(){if(!CAM)return;try{CAM.s.getTracks().forEach(function(t){t.stop()})}catch(e){}CAM.b.remove();CAM=null;wbUI();dockUpdate()}
+function toggleCam(){CAM?camOff():camOn()}
+function drawCam(c){
+ if(!CAM||!CAM.v||CAM.v.readyState<2)return;var v=CAM.v,vw=v.videoWidth,vh=v.videoHeight;if(!vw)return;var s=Math.min(vw,vh),d=190,x=24,y=H-d-24;
+ c.save();c.beginPath();c.arc(x+d/2,y+d/2,d/2,0,6.2832);c.closePath();c.clip();c.drawImage(v,(vw-s)/2,(vh-s)/2,s,s,x,y,d,d);c.restore();
+ c.save();c.lineWidth=5;c.strokeStyle='#fff';c.beginPath();c.arc(x+d/2,y+d/2,d/2,0,6.2832);c.stroke();c.restore()}
+
+/* ---------- recording ---------- */
+function pickMime(){var c=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4;codecs=avc1,mp4a.40.2','video/mp4'];for(var i=0;i<c.length;i++){try{if(MediaRecorder.isTypeSupported(c[i]))return c[i]}catch(e){}}return''}
+function elapsed(){return REC?(REC.paused?REC.acc:REC.acc+Date.now()-REC.ts):0}
+async function startRec(mode){
+ if(REC)return;
+ if(!window.MediaRecorder){toast('المتصفح ده لا يدعم التسجيل — استخدم Chrome أو Edge أو Safari حديث');return}
+ var hasDisp=!!(navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia);
+ if(mode==='tab'&&!hasDisp){toast('تسجيل المنصة كاملة غير مدعوم هنا — هنسجّل السبورة فقط');mode='board'}
+ var mic=null,ds=null,vtrack,rc=null,tick=null,ac=null,micGain=null,atracks=[];
+ try{mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}})}
+ catch(e){if(!confirm('تعذّر الوصول للميكروفون. تسجّل بدون صوت؟'))return}
+ if(mode==='tab'){
+  try{ds=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:30},audio:true,preferCurrentTab:true,selfBrowserSurface:'include',surfaceSwitching:'include',systemAudio:'include'})}
+  catch(e){if(mic)mic.getTracks().forEach(function(t){t.stop()});toast('تم إلغاء اختيار الشاشة');return}
+  vtrack=ds.getVideoTracks()[0];
+ }else{
+  rc=document.createElement('canvas');rc.width=W;rc.height=H;var rx=rc.getContext('2d');
+  tick=setInterval(function(){rx.drawImage(cv,0,0,W,H);drawCam(rx)},33);
+  vtrack=rc.captureStream(30).getVideoTracks()[0];
+ }
+ var AC=window.AudioContext||window.webkitAudioContext,dsA=ds?ds.getAudioTracks():[];
+ if(AC&&(mic||dsA.length)){
+  try{ac=new AC();var dest=ac.createMediaStreamDestination();
+   if(mic){var ms=ac.createMediaStreamSource(mic);micGain=ac.createGain();ms.connect(micGain);micGain.connect(dest)}
+   if(dsA.length)ac.createMediaStreamSource(new MediaStream(dsA)).connect(dest);
+   atracks=dest.stream.getAudioTracks()}catch(e){ac=null;micGain=null;atracks=(mic?mic.getAudioTracks():[]).concat(dsA)}
+ }else atracks=(mic?mic.getAudioTracks():[]).concat(dsA);
+ var stream=new MediaStream([vtrack].concat(atracks)),mime=pickMime(),mr;
+ try{mr=new MediaRecorder(stream,mime?{mimeType:mime,videoBitsPerSecond:3000000,audioBitsPerSecond:128000}:{})}catch(e){try{mr=new MediaRecorder(stream)}catch(e2){toast('تعذّر بدء التسجيل');if(tick)clearInterval(tick);if(mic)mic.getTracks().forEach(function(t){t.stop()});if(ds)ds.getTracks().forEach(function(t){t.stop()});return}}
+ REC={mode:mode,mr:mr,chunks:[],acc:0,ts:Date.now(),paused:false,mic:mic,ds:ds,ac:ac,micGain:micGain,tick:tick,muted:false,mime:mr.mimeType||mime||'video/webm',timer:null,stopping:false};
+ mr.ondataavailable=function(e){if(e.data&&e.data.size)REC.chunks.push(e.data)};
+ mr.onstop=finishRec;
+ vtrack.addEventListener('ended',function(){stopRec()});
+ mr.start(1000);
+ REC.timer=setInterval(timerUpdate,500);timerUpdate();dockUpdate();wbUI();
+ toast(mode==='tab'?'بدأ تسجيل المنصة كاملة — تنقّل بين الأدوات براحتك 🎬':'بدأ تسجيل السبورة 🎬')}
+function stopRec(){if(!REC||REC.stopping)return;REC.stopping=true;REC.dur=elapsed();try{if(REC.mr.state!=='inactive')REC.mr.stop();else finishRec()}catch(e){finishRec()}}
+function pauseRec(){if(!REC||REC.stopping)return;try{if(REC.paused){REC.mr.resume();REC.ts=Date.now();REC.paused=false}else{REC.mr.pause();REC.acc+=Date.now()-REC.ts;REC.paused=true}}catch(e){}dockUpdate();wbUI()}
+function toggleMic(){if(!REC)return;if(!REC.mic){toast('التسجيل شغّال من غير ميكروفون');return}REC.muted=!REC.muted;if(REC.micGain)REC.micGain.gain.value=REC.muted?0:1;else REC.mic.getAudioTracks().forEach(function(t){t.enabled=!REC.muted});dockUpdate()}
+function timerUpdate(){var s=fmt(elapsed());document.querySelectorAll('.wb-time').forEach(function(n){n.textContent=s})}
+function finishRec(){
+ var r=REC;if(!r||r.done)return;r.done=true;
+ clearInterval(r.timer);if(r.tick)clearInterval(r.tick);
+ try{if(r.ds)r.ds.getTracks().forEach(function(t){t.stop()})}catch(e){}
+ try{if(r.mic)r.mic.getTracks().forEach(function(t){t.stop()})}catch(e){}
+ try{if(r.ac)r.ac.close()}catch(e){}
+ var dur=r.dur||elapsed(),blob=new Blob(r.chunks,{type:r.mime||'video/webm'}),th=null;
+ REC=null;dockUpdate();wbUI();
+ try{var t=document.createElement('canvas');t.width=320;t.height=180;t.getContext('2d').drawImage(cv,0,0,320,180);th=t.toDataURL('image/jpeg',.7)}catch(e){}
+ if(!blob.size){toast('التسجيل طلع فاضي — حاول تاني');return}
+ saveDlg(blob,dur,th)}
+function modal(html){var o=document.createElement('div');o.className='wb-modal';o.innerHTML='<div class="wb-m">'+html+'</div>';document.body.appendChild(o);o.close=function(){var v=q('video',o);if(v){try{v.pause()}catch(e){}if(v.dataset.u)URL.revokeObjectURL(v.dataset.u)}o.remove()};return o}
+function vidFix(v){v.addEventListener('loadedmetadata',function(){if(v.duration===Infinity||isNaN(v.duration)){v.currentTime=1e101;v.addEventListener('timeupdate',function f(){v.removeEventListener('timeupdate',f);v.currentTime=0})}})}
+function ext(t){return/mp4/.test(t||'')?'mp4':'webm'}
+function saveDlg(blob,dur,th){
+ var u=URL.createObjectURL(blob),def='محاضرة '+new Date().toLocaleDateString('ar-EG');
+ var o=modal('<h3>✅ انتهى التسجيل</h3><p class="sub" style="margin:0 0 8px">المدة '+fmt(dur)+' · الحجم '+mb(blob.size)+'</p><video controls playsinline data-u="'+u+'" src="'+u+'"></video><input type="text" id="wbTitle" maxlength="90" value="'+esc(def)+'"><div class="row"><button class="pri" id="wbSv">💾 حفظ في الأرشيف</button><button id="wbDl">⬇ تحميل الفيديو</button><button id="wbDs">🗑 تجاهل</button></div>');
+ vidFix(q('video',o));
+ function title(){return(q('#wbTitle',o).value||def).trim()}
+ q('#wbDl',o).onclick=function(){download(blob,title()+'.'+ext(blob.type))};
+ q('#wbDs',o).onclick=function(){if(confirm('تجاهل التسجيل نهائيًا؟'))o.close()};
+ q('#wbSv',o).onclick=function(){var b=this;b.disabled=true;b.textContent='جارٍ الحفظ…';
+  idbPut({id:Date.now(),title:title(),created:Date.now(),dur:dur,size:blob.size,type:blob.type,blob:blob,thumb:th}).then(function(){
+   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+   o.close();toast('اتحفظ في الأرشيف ✅');WB.tab='arc';try{if(st.v==='wb')WB.show('arc');else go('wb')}catch(e){go('wb')}
+  }).catch(function(){b.disabled=false;b.textContent='💾 حفظ في الأرشيف';alert('تعذّر الحفظ في الأرشيف (المساحة ممتلئة أو التصفح الخاص). نزّل الفيديو على جهازك بدل كده.')})}}
+
+/* ---------- archive (IndexedDB) ---------- */
+function idb(){return new Promise(function(res,rej){var r=indexedDB.open('modo_wb',1);r.onupgradeneeded=function(){r.result.createObjectStore('lec',{keyPath:'id'})};r.onsuccess=function(){res(r.result)};r.onerror=function(){rej(r.error)}})}
+function idbRun(mode,fn){return idb().then(function(d){return new Promise(function(res,rej){var t=d.transaction('lec',mode),rq=fn(t.objectStore('lec'));t.oncomplete=function(){res(rq&&rq.result)};t.onerror=t.onabort=function(){rej(t.error)}})})}
+function idbPut(o){return idbRun('readwrite',function(s){return s.put(o)})}
+function idbAll(){return idbRun('readonly',function(s){return s.getAll()}).then(function(a){return(a||[]).sort(function(x,y){return y.created-x.created})})}
+function idbGet(id){return idbRun('readonly',function(s){return s.get(id)})}
+function idbDel(id){return idbRun('readwrite',function(s){return s.delete(id)})}
+function arcRender(){
+ var box=q('#wbArc');if(!box)return;
+ idbAll().then(function(list){
+  var c=q('#wbCnt');if(c)c.textContent=list.length?'('+list.length+')':'';
+  if(!q('#wbArc'))return;
+  if(!list.length){box.innerHTML='<p class="sub">لسه مفيش محاضرات في الأرشيف. اضغط «بدء التسجيل» من السبورة وأي محاضرة هتخلّصها هتتحفظ هنا كفيديو.</p>';return}
+  box.innerHTML='<div class="wb-arc">'+list.map(function(r){return'<div class="wb-card"><div class="th"'+(r.thumb?' style="background-image:url('+r.thumb+')"':'')+'><span class="du">'+fmt(r.dur)+'</span></div><div class="bd"><b>'+esc(r.title)+'</b><small>'+new Date(r.created).toLocaleString('ar-EG')+' · '+mb(r.size)+'</small><div class="ac"><button title="تشغيل" onclick="WB.play('+r.id+')">▶</button><button title="تحميل" onclick="WB.dl('+r.id+')">⬇</button><button title="تغيير الاسم" onclick="WB.ren('+r.id+')">✏️</button><button title="حذف" onclick="WB.del('+r.id+')">🗑</button></div></div></div>'}).join('')+'</div>'
+  var est=q('#wbEst');if(est&&navigator.storage&&navigator.storage.estimate)navigator.storage.estimate().then(function(e){est.textContent='المساحة المستخدمة: '+mb(e.usage||0)+' من '+mb(e.quota||0)})
+ }).catch(function(){var b=q('#wbArc');if(b)b.innerHTML='<p class="sub">الأرشيف غير متاح في هذا المتصفح (التصفح الخاص؟).</p>'})}
+WB.play=function(id){idbGet(id).then(function(r){if(!r)return;var u=URL.createObjectURL(r.blob);var o=modal('<h3>'+esc(r.title)+'</h3><video controls autoplay playsinline data-u="'+u+'" src="'+u+'"></video><div class="row" style="margin-top:10px"><button id="wbX">إغلاق</button></div>');vidFix(q('video',o));q('#wbX',o).onclick=function(){o.close()};o.addEventListener('click',function(e){if(e.target===o)o.close()})})};
+WB.dl=function(id){idbGet(id).then(function(r){if(r)download(r.blob,r.title+'.'+ext(r.type))})};
+WB.ren=function(id){idbGet(id).then(function(r){if(!r)return;var n=prompt('اسم المحاضرة:',r.title);if(n&&n.trim()){r.title=n.trim().slice(0,90);idbPut(r).then(arcRender)}})};
+WB.del=function(id){if(!confirm('حذف هذه المحاضرة نهائيًا؟'))return;idbDel(id).then(arcRender)};
+
+/* ---------- floating dock (visible on every page while recording / annotating) ---------- */
+function dockEnsure(){
+ if(WB.dk)return;var d=document.createElement('div');d.id='wbDock';
+ d.innerHTML='<div class="dk-r"><span class="grip" title="اسحب لتحريك الشريط">⠿</span><span class="dk-dot"></span><b class="dk-t wb-time">00:00</b><button data-a="pause" title="إيقاف مؤقت">⏸</button><button data-a="mic" title="كتم / تشغيل الميكروفون">🎤</button><button data-a="stop" class="stop">⏹ إنهاء</button><button data-a="exp" title="توسيع">▴</button></div>'
+ +'<div class="dk-r"><button data-a="cam">📷 كاميرا</button><button data-a="ov">✏️ رسم فوق المنصة</button><button data-a="board">🧑‍🏫 السبورة</button><button data-a="min" title="تصغير الشريط">▾</button></div>'
+ +'<div class="dk-r" data-r="ov"><button data-a="ot" data-v="pen">✏️</button><button data-a="ot" data-v="hl">🖍️</button><button data-a="ot" data-v="er">🧽</button>'
+ +['#e0262c','#1f7ae0','#1f9d55','#f2c500','#ffffff','#111111'].map(function(c){return'<button class="dk-c" data-a="oc" data-v="'+c+'" style="background:'+c+'"></button>'}).join('')
+ +'<button data-a="oclr">🗑 مسح</button><button data-a="opass">🖱 تفاعل مع المنصة</button><button data-a="ox">✕</button></div>';
+ document.body.appendChild(d);WB.dk=d;
+ var g=q('.grip',d),dr=null;
+ g.addEventListener('pointerdown',function(e){var r=d.getBoundingClientRect();dr=[e.clientX-r.left,e.clientY-r.top];d.style.transform='none';d.style.left=r.left+'px';d.style.top=r.top+'px';d.style.bottom='auto';g.setPointerCapture(e.pointerId)});
+ g.addEventListener('pointermove',function(e){if(!dr)return;d.style.left=Math.max(0,Math.min(innerWidth-d.offsetWidth,e.clientX-dr[0]))+'px';d.style.top=Math.max(0,Math.min(innerHeight-d.offsetHeight,e.clientY-dr[1]))+'px'});
+ g.addEventListener('pointerup',function(){dr=null});
+ d.addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b)return;var a=b.getAttribute('data-a'),v=b.getAttribute('data-v');
+  if(a==='pause')pauseRec();else if(a==='stop')stopRec();else if(a==='mic')toggleMic();else if(a==='cam')toggleCam();
+  else if(a==='ov')ovSet(!OV.on);else if(a==='board')go('wb');else if(a==='min')d.classList.add('mini');else if(a==='exp')d.classList.remove('mini');
+  else if(a==='ot'){OV.tool=v;OV.act=true;ovPE()}else if(a==='oc'){setColor(v)}else if(a==='oclr')ovClear();
+  else if(a==='opass'){OV.act=!OV.act;ovPE()}else if(a==='ox'){OV.on=false;ovClear();ovPE()}
+  dockUpdate()})}
+function dockUpdate(){
+ dockEnsure();var d=WB.dk,show=!!REC||OV.on;d.style.display=show?'flex':'none';if(!REC)d.classList.remove('mini');
+ var r1=d.children[0],r3=d.children[2];r1.style.display=REC?'':'none';r3.style.display=OV.on?'':'none';
+ if(!REC&&!OV.on)return;
+ var t=function(s){return q(s,d)};
+ t('[data-a=pause]').textContent=REC&&REC.paused?'▶':'⏸';t('.dk-dot').className='dk-dot'+(REC&&REC.paused?' p':'');
+ t('[data-a=mic]').textContent=REC&&REC.muted?'🔇':'🎤';
+ t('[data-a=cam]').classList.toggle('on',!!CAM);t('[data-a=ov]').classList.toggle('on',OV.on);
+ d.querySelectorAll('[data-a=ot]').forEach(function(b){b.classList.toggle('on',b.dataset.v===OV.tool)});
+ t('[data-a=opass]').classList.toggle('on',!OV.act);t('[data-a=opass]').textContent=OV.act?'🖱 تفاعل مع المنصة':'✏️ ارجع للرسم';
+ timerUpdate()}
+
+/* ---------- view ---------- */
+function wbUI(){
+ var root=q('#wbCW');
+ document.querySelectorAll('[data-tool]').forEach(function(b){b.classList.toggle('on',b.dataset.tool===WB.tool)});
+ document.querySelectorAll('.wb-sw[data-c]').forEach(function(b){b.classList.toggle('on',b.dataset.c.toLowerCase()===WB.color.toLowerCase())});
+ var cp=q('#wbColor');if(cp&&/^#[0-9a-f]{6}$/i.test(WB.color))cp.value=WB.color;
+ var sz=q('#wbSize');if(sz&&+sz.value!==WB.size)sz.value=WB.size;var sl=q('#wbSzL');if(sl)sl.textContent=WB.size;
+ var fl=q('#wbFill');if(fl)fl.checked=WB.fill;
+ var bg=q('#wbBg');if(bg)bg.value=pg().bg;
+ var pl=q('#wbPL');if(pl)pl.textContent='صفحة '+(WB.pi+1)+' / '+WB.pages.length;
+ var sp=q('#wbStk');if(sp){sp.style.display=WB.tool==='sticker'?'flex':'none';sp.querySelectorAll('button').forEach(function(b){b.classList.toggle('on',b.dataset.e===WB.sticker)})}
+ var ds=q('#wbDel');if(ds)ds.style.display=WB.sel?'':'none';
+ var u=q('#wbUndo');if(u)u.style.opacity=pg().hist.length?1:.4;var rr=q('#wbRedo');if(rr)rr.style.opacity=pg().redo.length?1:.4;
+ var rb=q('#wbRec');if(rb){rb.classList.toggle('live',!!REC);rb.innerHTML=REC?'⏹ إنهاء التسجيل <span class="wb-time">'+fmt(elapsed())+'</span>':'🔴 بدء التسجيل'}
+ var pb=q('#wbPause');if(pb){pb.style.display=REC?'':'none';pb.textContent=REC&&REC.paused?'▶ استئناف':'⏸ إيقاف مؤقت'}
+ var cb=q('#wbCamBtn');if(cb)cb.classList.toggle('on',!!CAM);
+ var ob=q('#wbOvBtn');if(ob)ob.classList.toggle('on',OV.on);
+ var md=q('#wbMode');if(md){md.disabled=!!REC;md.value=REC?REC.mode:WB.mode}
+ if(root)cv.style.cursor=WB.tool==='sel'?'default':WB.tool==='text'?'text':(WB.tool==='laser'||WB.tool==='spot')?'none':'crosshair'}
+WB.setTool=setTool;WB.setColor=setColor;WB.setSize=setSize;WB.setBg=setBg;WB.act=act;
+WB.setSticker=function(e){WB.sticker=e;wbUI()};
+WB.setFill=function(v){WB.fill=!!v};
+WB.setMode=function(v){WB.mode=v};
+WB.show=function(t){WB.tab=t;var b=q('#wbBoardPane'),a=q('#wbArcPane');if(!b||!a)return;b.hidden=t!=='board';a.hidden=t!=='arc';var x=q('#wbTabB'),y=q('#wbTabA');if(x)x.classList.toggle('on',t==='board');if(y)y.classList.toggle('on',t==='arc');if(t==='arc')arcRender();else{compose();wbUI()}};
+WB.startRec=startRec;WB.stopRec=stopRec;WB.camOn=camOn;WB.camOff=camOff;
+window.wbView=function(){
+ var hasDisp=!!(navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia);
+ setTimeout(mount,0);
+ return'<div class="wb"><div class="wb-tabs"><button id="wbTabB" class="on" onclick="WB.show(\'board\')">🧑‍🏫 السبورة</button><button id="wbTabA" onclick="WB.show(\'arc\')">🎞️ أرشيف المحاضرات <small id="wbCnt"></small></button></div>'
+ +'<div id="wbBoardPane">'
+ +'<div class="wb-row">'+TOOLS.map(function(t){return'<button class="wb-b" data-tool="'+t[0]+'" title="'+t[2]+'" onclick="WB.setTool(\''+t[0]+'\')">'+(t[0]==='sticker'?'😀':t[1])+'</button>'}).join('')
+ +'<button class="wb-b" title="إدراج صورة" onclick="WB.act(\'img\')">🖼️</button><input type="file" id="wbFile" accept="image/*" hidden></div>'
+ +'<div class="wb-st" id="wbStk" style="display:none">'+STK.map(function(e){return'<button data-e="'+e+'" onclick="WB.setSticker(\''+e+'\')">'+e+'</button>'}).join('')+'</div>'
+ +'<div class="wb-row">'+COLORS.map(function(c){return'<button class="wb-sw" data-c="'+c+'" style="background:'+c+'" onclick="WB.setColor(\''+c+'\')"></button>'}).join('')
+ +'<input type="color" id="wbColor" value="#111111" oninput="WB.setColor(this.value)" style="width:34px;height:30px;border:0;background:none;padding:0">'
+ +'<span class="wb-sep"></span><label>السُمك <input type="range" id="wbSize" min="1" max="30" value="4" oninput="WB.setSize(this.value)"><b id="wbSzL">4</b></label>'
+ +'<label><input type="checkbox" id="wbFill" onchange="WB.setFill(this.checked)"> تعبئة الأشكال</label>'
+ +'<span class="wb-sep"></span><label>الخلفية <select id="wbBg" onchange="WB.setBg(this.value)"><option value="white">أبيض</option><option value="board">سبورة خضراء</option><option value="black">أسود</option><option value="grid">مربعات</option><option value="lines">سطور</option><option value="graph">محاور رسم بياني</option></select></label></div>'
+ +'<div class="wb-row"><button class="wb-b" id="wbUndo" title="تراجع (Ctrl+Z)" onclick="WB.act(\'undo\')">↶</button><button class="wb-b" id="wbRedo" title="إعادة (Ctrl+Y)" onclick="WB.act(\'redo\')">↷</button><button class="wb-b txt" id="wbDel" style="display:none" onclick="WB.act(\'del\')">🗑 حذف المحدد</button><button class="wb-b txt" onclick="WB.act(\'clr\')">🧹 مسح الصفحة</button>'
+ +'<span class="wb-sep"></span><button class="wb-b" title="الصفحة السابقة" onclick="WB.act(\'pprev\')">›</button><b id="wbPL" style="font-size:.85rem">صفحة 1 / 1</b><button class="wb-b" title="الصفحة التالية" onclick="WB.act(\'pnext\')">‹</button><button class="wb-b txt" onclick="WB.act(\'padd\')">➕ صفحة</button><button class="wb-b txt" onclick="WB.act(\'pdel\')">🗑 صفحة</button>'
+ +'<span class="wb-sep"></span><button class="wb-b txt" onclick="WB.act(\'png\')">📸 حفظ صورة</button></div>'
+ +'<div id="wbStage" class="wb-stage"><div id="wbCW"></div></div>'
+ +'<div class="wb-row" style="margin-top:10px"><select id="wbMode" onchange="WB.setMode(this.value)"><option value="tab">🖥️ تسجيل المنصة كاملة (السبورة + كل الأدوات)</option><option value="board">🧑‍🏫 تسجيل السبورة فقط</option></select>'
+ +'<button class="wb-b txt rec" id="wbRec" onclick="WB.act(\'rec\')">🔴 بدء التسجيل</button><button class="wb-b txt" id="wbPause" style="display:none" onclick="WB.act(\'pause\')">⏸ إيقاف مؤقت</button>'
+ +'<button class="wb-b txt" id="wbCamBtn" onclick="WB.act(\'cam\')">📷 الكاميرا</button><button class="wb-b txt" id="wbOvBtn" onclick="WB.act(\'ov\')">✏️ رسم فوق المنصة</button></div>'
+ +'<p class="wb-hint">'+(hasDisp?'🖥️ <b>تسجيل المنصة كاملة:</b> المتصفح هيسألك تختار الشاشة — اختار <b>«هذا التبويب»</b> وفعّل «مشاركة صوت التبويب». بعدها تقدر تنتقل لأي أداة في المنصة (محاكاة 3D، حاسبات، اختبار…) وكل ده بيتسجّل مع صوتك والكاميرا، وشريط تحكم صغير بيظهر فوق كل الصفحات.':'⚠️ جهازك لا يدعم تسجيل الشاشة كاملة، فالتسجيل هيكون للسبورة فقط.')+'<br>🧑‍🏫 <b>تسجيل السبورة فقط:</b> بيسجّل السبورة + الكاميرا + الصوت في ركن الفيديو، ويشتغل على كل الأجهزة.</p>'
+ +'</div>'
+ +'<div id="wbArcPane" hidden><div id="wbArc"><p class="sub">جارٍ التحميل…</p></div><p class="wb-hint">💾 الأرشيف محفوظ على هذا الجهاز وهذا المتصفح. <span id="wbEst"></span></p></div></div>'};
+function mount(){
+ var cw=q('#wbCW');if(!cw)return;cw.appendChild(cv);
+ var f=q('#wbFile');if(f)f.onchange=function(){if(f.files&&f.files[0])addImg(f.files[0]);f.value=''};
+ WB.show(WB.tab);wbUI();compose();idbAll().then(function(l){var c=q('#wbCnt');if(c)c.textContent=l.length?'('+l.length+')':''}).catch(function(){})}
+addEventListener('keydown',function(e){
+ var tg=e.target;if(tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.tagName==='SELECT'||tg.isContentEditable))return;
+ if(e.key==='Escape'&&OV.on){ovSet(false);return}
+ var on=false;try{on=st.v==='wb'&&!!q('#wbCW')&&WB.tab==='board'}catch(_){}if(!on)return;
+ var k=(e.key||'').toLowerCase();
+ if((e.ctrlKey||e.metaKey)&&k==='z'){e.preventDefault();act(e.shiftKey?'redo':'undo');return}
+ if((e.ctrlKey||e.metaKey)&&k==='y'){e.preventDefault();act('redo');return}
+ if(e.key==='Delete'||e.key==='Backspace'){if(WB.sel){e.preventDefault();delSel()}return}
+ var m={p:'pen',h:'hl',e:'er',l:'laser',v:'sel',t:'text',r:'rect',o:'ellipse',a:'arrow'}[k];
+ if(m&&!e.ctrlKey&&!e.metaKey&&!e.altKey)setTool(m)});
+addEventListener('beforeunload',function(e){if(REC){e.preventDefault();e.returnValue=''}});
+rebuildLayer();compose();
+})();
+</script>
+
 </body></html>
