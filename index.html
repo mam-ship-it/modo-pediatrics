@@ -5697,4 +5697,34 @@ const NEWS=[
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
+<style id="hold-btn-fix">
+/* Hold / long-press buttons: no text selection, no copy callout, no tap flash (mobile + desktop) */
+button,[role="button"],[onpointerdown],[onpointerup],.lbp,.tx-b,.dk-t,.dk-f,.btn,.fc-card{
+ -webkit-user-select:none!important;user-select:none!important;
+ -webkit-touch-callout:none!important;-webkit-tap-highlight-color:transparent;
+ touch-action:manipulation}
+button *,[onpointerdown] *,[onpointerup] *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important}
+/* the suction hold buttons must never be scrolled/zoomed/selected while held */
+[onpointerdown*="suDown"]{touch-action:none!important;-webkit-user-drag:none}
+[onpointerdown*="suDown"] *{pointer-events:none}
+</style>
+<script id="hold-btn-fix-js">
+(function(){
+ var HOLD='[onpointerdown*="suDown"]';
+ var BTN='button,[role="button"],[onpointerdown],[onpointerup],.lbp';
+ function hit(e,sel){var t=e.target;return t&&t.closest?t.closest(sel):null}
+ /* 1) block the long-press context menu / "Copy" bubble on every button-like element */
+ document.addEventListener('contextmenu',function(e){if(hit(e,BTN)){e.preventDefault();e.stopPropagation()}},true);
+ /* 2) block text-selection and dragging starting on buttons */
+ document.addEventListener('selectstart',function(e){if(hit(e,BTN))e.preventDefault()},true);
+ document.addEventListener('dragstart',function(e){if(hit(e,BTN))e.preventDefault()},true);
+ /* 3) hold buttons: stop the browser's touch long-press behaviour (iOS/Android) and keep the finger captured */
+ document.addEventListener('touchstart',function(e){if(hit(e,HOLD)&&e.cancelable)e.preventDefault()},{passive:false,capture:true});
+ document.addEventListener('pointerdown',function(e){var b=hit(e,HOLD);if(b){try{b.setPointerCapture(e.pointerId)}catch(_){}}},true);
+ /* 4) if the browser still cancels the touch, end the hold cleanly so the timer never gets stuck */
+ document.addEventListener('pointercancel',function(e){if(hit(e,HOLD)&&typeof suUp==='function')suUp()},true);
+ /* 5) clear any selection that might already have started */
+ document.addEventListener('selectionchange',function(){var a=document.activeElement;if(a&&a.matches&&a.matches(HOLD)){var s=getSelection&&getSelection();if(s&&s.rangeCount&&!s.isCollapsed)s.removeAllRanges()}});
+})();
+</script>
 </body></html>
