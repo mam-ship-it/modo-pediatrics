@@ -6275,6 +6275,10 @@ function psqNext(){const b=st.psq;b.ans=0;b.i++;if(b.i>=b.list.length){b.run=0;b
 #modo-midterm-head p{margin:5px 0 0;opacity:.9}
 #modo-midterm-close{position:absolute;left:14px;top:14px;border:1px solid #ffffff88;background:#ffffff20;color:#fff;border-radius:50%;width:38px;height:38px;font-size:1.2rem}
 #modo-midterm-content{padding:18px}
+.mtm-vid{margin:12px 0 16px;padding:12px;border-radius:16px;background:linear-gradient(135deg,#0b2f7a,#0e6b7a);color:#fff}
+.mtm-vid h4{margin:0 0 8px;font-size:1.05rem;color:#ffd166}
+.mtm-vid video{display:block;width:100%;aspect-ratio:16/9;background:#000;border-radius:12px}
+.mtm-vid small{display:block;margin-top:8px;opacity:.85}
 .mtm-welcome{padding:14px;border-radius:14px;background:color-mix(in srgb,#1f7ae0 10%,var(--card));border:1px solid var(--line);margin-bottom:14px;font-weight:700}
 .mtm-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .mtm-tabs button,.mtm-back{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 14px;font:700 .9rem Cairo;cursor:pointer}
@@ -6447,7 +6451,10 @@ function psqNext(){const b=st.psq;b.ans=0;b.i++;if(b.i>=b.list.length){b.run=0;b
   const au=lvl=>{const r=[];LES.forEach(L=>((AD[lvl]||{})[L]||[]).forEach((t,i)=>{const p=t.split('|'),opts=shuf([p[1],p[2],p[3],p[4]],'au'+lvl+L+i);r.push({id:'xa'+lvl+'_'+L+'_'+i,q:CH[L].en+' \u2014 '+p[0],o:opts,a:opts.indexOf(p[1]),lv:lvl==='e'?0:lvl==='m'?1:2,les:L,why:'Answer: '+p[1]})}));return r};
   PQE=mkModels([facts.concat(au('e')),qs.concat(au('m')),au('h'),[]]);return PQE}
  let TDE=null;function thDataEn(){if(!TDE){try{TDE=JSON.parse(document.getElementById('modo-theory-data-en').textContent)}catch(e){TDE={}}}return TDE}let TD=null;function thData(){if(!TD){try{TD=JSON.parse(document.getElementById('modo-theory-data').textContent)}catch(e){TD={}}}return TD}
- function theoryHTML(id){const it=theory.find(x=>x.id===id)||theory[0];return `<div class="mtm-detail"><button class="mtm-back" data-back>${T_('← رجوع للمحاضرات','← Back to lectures')}</button></div><div class="thr${EN?' enl':''}"><div class="thr-hd"><b>${it.icon} ${esc(it.title)}</b>${EN?'':'<small>'+esc(it.desc)+'</small>'}</div>${EN?(thDataEn()[it.id]||''):(thData()[it.id]||'<p>المحتوى غير متاح حاليًا.</p>')}</div>`}
+ const VIDS={growth:'videos/growth-and-development.mp4',newborn:'videos/normal-newborn.mp4'};
+ function vidBlock(id){const u=VIDS[id];if(!u)return '';return `<div class="mtm-vid"><h4>${T_('🎬 فيديو مراجعة الدرس','🎬 Lecture revision video')}</h4><video controls playsinline preload="metadata" controlslist="nodownload" src="${u}"></video><small>${T_('شرح موشن بالصوت — شاهده قبل ما تذاكر النقاط المكتوبة.','Motion explainer with Arabic narration — watch it before studying the written points.')}</small></div>`}
+ function pauseVids(){content.querySelectorAll('video').forEach(v=>{try{v.pause()}catch(e){}})}
+ function theoryHTML(id){const it=theory.find(x=>x.id===id)||theory[0];return `<div class="mtm-detail"><button class="mtm-back" data-back>${T_('← رجوع للمحاضرات','← Back to lectures')}</button></div><div class="thr${EN?' enl':''}"><div class="thr-hd"><b>${it.icon} ${esc(it.title)}</b>${EN?'':'<small>'+esc(it.desc)+'</small>'}</div>${vidBlock(it.id)}${EN?(thDataEn()[it.id]||''):(thData()[it.id]||'<p>المحتوى غير متاح حاليًا.</p>')}</div>`}
 
  let tab='practical',selected=null,mode='main',hw=null,tsel=null;
  const HWMAP={0:'l1',1:'l2',2:'l3',5:'l4'},HWT={l1:'📏 1 · النمو والعلامات الحيوية',l2:'🫁 2 · الأكسجين',l3:'💨 3 · النيبيولايزر',l4:'🧪 4 · الشفط'};
@@ -6570,7 +6577,7 @@ function submitEx(){const un=EX.a.filter((x,i)=>x===undefined).length;if(un&&!co
   content.innerHTML=`${wm}${tabs}${body}`;
  }
  function open(){if(!window.auth||!auth()){if(window.MODOGATE)MODOGATE.open('l');return;}EX=null;selected=null;tsel=null;hw=null;mode='main';tab='practical';draw();overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
- function close(){overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');document.body.style.overflow='';}
+ function close(){pauseVids();overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');document.body.style.overflow='';}
  document.addEventListener('click',e=>{
   
   if(e.target.closest('#modo-midterm-close'))close();
