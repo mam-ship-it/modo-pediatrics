@@ -657,12 +657,12 @@ function auth(){return !!(window.MODOGATE&&MODOGATE.authed())}
   }, window.MODO_AI || {});
 
   var API = 'https://generativelanguage.googleapis.com/v1beta/models/';
-  var cool = {}, dead = {}, noThink = {};   /* per-model: cooldown-until (ms), unusable, thinking-config rejected */
+  var cool = {}, dead = {}, noThink = {}, ov = {};   /* per-model: cooldown-until (ms), unusable, thinking-config rejected */
   function thinkCfg(model, tier) {
     if (noThink[model]) return null;
-    if (/gemini-3/.test(model)) return { thinkingLevel: tier === 'complex' ? 'low' : 'minimal' };
-    if (/gemini-2\.5-flash-lite/.test(model)) return { thinkingBudget: 0 };
-    if (/gemini-2\.5-flash/.test(model)) return { thinkingBudget: tier === 'complex' ? 512 : 0 };
+    if (/gemini-3/.test(model)) return { thinkingLevel: tier === 'boost' ? 'high' : tier === 'complex' ? 'low' : 'minimal' };
+    if (/gemini-2\.5-flash-lite/.test(model)) return { thinkingBudget: tier === 'boost' ? 1024 : 0 };
+    if (/gemini-2\.5-flash/.test(model)) return { thinkingBudget: tier === 'boost' ? 4096 : tier === 'complex' ? 1024 : 0 };
     return null;
   }
   var STORE = 'modo_gemini_key';
@@ -733,14 +733,16 @@ function auth(){return !!(window.MODOGATE&&MODOGATE.authed())}
 
   function normalize(input) {
     var arr = typeof input === 'string' ? [{ role: 'user', content: input }] : (input || []);
-    var out = [];
+    var out = [], sys = [];
     arr.forEach(function (m) {
       if (!m || !m.content) return;
+      if (m.role === 'system') { sys.push(String(m.content)); return; }
       var role = m.role === 'assistant' ? 'model' : 'user', c = String(m.content);
       if (out.length && out[out.length - 1].role === role) out[out.length - 1].content += '\n\n' + c;
       else out.push({ role: role, content: c });
     });
     while (out.length && out[0].role !== 'user') out.shift();
+    if (sys.length) out.sys = sys.join('\n\n');
     return out;
   }
 
@@ -762,7 +764,8 @@ function auth(){return !!(window.MODOGATE&&MODOGATE.authed())}
         messages: msgs.map(function (m) { return { role: m.role === 'model' ? 'assistant' : 'user', content: m.content }; }),
         max_tokens: CFG.max_tokens, temperature: 0.7, top_p: 0.95, stream: true
       };
-      if (thinkCfg(model, tier)) body.reasoning_effort = tier === 'complex' ? 'low' : 'minimal';
+      if (thinkCfg(model, tier)) body.reasoning_effort = tier === 'boost' ? 'high' : tier === 'complex' ? 'low' : 'minimal';
+      if (msgs.sys) body.messages.unshift({ role: 'system', content: msgs.sys });
     } else {
       body = {
         contents: msgs.map(function (m) { return { role: m.role, parts: [{ text: m.content }] }; }),
@@ -774,13 +777,14 @@ function auth(){return !!(window.MODOGATE&&MODOGATE.authed())}
           { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
         ]
       };
+      if (msgs.sys) body.systemInstruction = { parts: [{ text: msgs.sys }] };
       if (thinkCfg(model, tier)) body.generationConfig.thinkingConfig = thinkCfg(model, tier);
       url = CFG.proxy || (API + model + ':streamGenerateContent?alt=sse');
       headers = { 'content-type': 'application/json' };
       if (!CFG.proxy) headers['x-goog-api-key'] = key;
     }
     if (xo && xo.json) { if (!CFG.proxy && isAQ) body.response_format = { type: 'json_object' }; else body.generationConfig.responseMimeType = 'application/json'; }
-    if (xo && xo.temp != null) { if (body.generationConfig) body.generationConfig.temperature = xo.temp; else body.temperature = xo.temp; }
+    if (xo && xo.temp != null && !/gemini-3/.test(model)) { if (body.generationConfig) body.generationConfig.temperature = xo.temp; else body.temperature = xo.temp; }
     return { url: url, headers: headers, body: body, isAQ: isAQ, think: !!thinkCfg(model, tier) };
   }
 
@@ -798,11 +802,19 @@ function auth(){return !!(window.MODOGATE&&MODOGATE.authed())}
   }
 
   async function once(key, model, msgs, opts) {
-    var rq = buildReq(key, model, msgs, opts.modelTier, opts), res;
-    try { res = await fetch(rq.url, { method: 'POST', headers: rq.headers, body: JSON.stringify(rq.body), signal: opts.signal }); }
-    catch (e) { if (e && e.name === 'AbortError') throw err('cancelled'); throw err('net', e && e.message); }
+    var rq = buildReq(key, model, msgs, opts.boost ? 'boost' : opts.modelTier, opts), res;
+    /* WATCHDOG: never wait forever. 40s for first byte, 30s stall between chunks, 100s total. */
+    var wdc = new AbortController(), wdWhy = '', wdT = null, wdTot = null;
+    if (opts.signal) opts.signal.addEventListener('abort', function () { wdc.abort(); });
+    function wdArm(ms, why) { clearTimeout(wdT); wdT = setTimeout(function () { wdWhy = why; wdc.abort(); }, ms); }
+    wdTot = setTimeout(function () { wdWhy = 'total'; wdc.abort(); }, 100000);
+    function wdOff() { clearTimeout(wdT); clearTimeout(wdTot); }
+    wdArm(40000, 'first_byte');
+    try { res = await fetch(rq.url, { method: 'POST', headers: rq.headers, body: JSON.stringify(rq.body), signal: wdc.signal }); }
+    catch (e) { wdOff(); if (wdWhy) throw err('timeout', wdWhy); if (e && e.name === 'AbortError') throw err('cancelled'); throw err('net', e && e.message); }
 
     if (!res.ok) {
+      wdOff();
       var m = '', ra = 0;
       try {
         var j = await res.clone().json(), er = j && j.error;
@@ -846,6 +858,7 @@ function auth(){return !!(window.MODOGATE&&MODOGATE.authed())}
     }
     try {
       for (;;) {
+        wdArm(30000, 'stall');
         var r = await reader.read(); if (r.done) break;
         /* Google's SSE uses CRLF line endings: normalise before splitting on blank lines */
         buf = (buf + dec.decode(r.value, { stream: true })).replace(/\r\n/g, '\n');
@@ -855,10 +868,14 @@ function auth(){return !!(window.MODOGATE&&MODOGATE.authed())}
       buf = (buf + dec.decode()).replace(/\r\n/g, '\n');
       if (buf.trim()) buf.split('\n\n').forEach(handle);
     } catch (e) {
+      wdOff();
       if (e && e.code) throw e;
-      if (e && e.name === 'AbortError') throw err('cancelled');
-      if (!text) throw err('net', e && e.message);
+      if (wdWhy && !text) throw err('timeout', wdWhy);
+      if (wdWhy && text) { trunc = true; }
+      else if (e && e.name === 'AbortError') throw err('cancelled');
+      else if (!text) throw err('net', e && e.message);
     }
+    wdOff();
     if (!text) throw err('empty', why || 'no text');
     return { text: text, truncated: trunc };
   }
@@ -879,11 +896,11 @@ function auth(){return !!(window.MODOGATE&&MODOGATE.authed())}
     var msgs = normalize(input);
     var complex = opts.modelTier === 'complex';
     var list = complex
-      ? [CFG.model_complex, 'gemini-2.5-flash', CFG.model_fast, 'gemini-2.5-flash-lite']
+      ? [CFG.model_complex, CFG.model_fast, 'gemini-2.5-flash', 'gemini-2.5-flash-lite']
       : [CFG.model_fast, 'gemini-2.5-flash-lite', CFG.model_complex, 'gemini-2.5-flash'];
     var models = CFG.proxy ? [list[0]] : list.filter(function (x, i) { return list.indexOf(x) === i; });
     var last, waits = 0, tries = 0;
-    while (tries++ < 16) {
+    while (tries++ < 30) {
       var now = Date.now();
       var live = models.filter(function (m) { return !dead[m]; });
       if (!live.length) throw last || err('api_error');
@@ -896,14 +913,17 @@ function auth(){return !!(window.MODOGATE&&MODOGATE.authed())}
         continue;
       }
       var model = avail[0];
-      try { return await once(key, model, msgs, opts); }
+      var t0 = Date.now(); window.__shLog = window.__shLog || [];
+      function lg(r, x) { var o = { model: model, boost: !!opts.boost, sec: +((Date.now() - t0) / 1000).toFixed(1), result: r, chars: x && x.text ? x.text.length : 0, truncated: !!(x && x.truncated), retry: x && x.retry || 0, msg: x && x.message ? String(x.message).slice(0, 300) : '', t: new Date().toLocaleTimeString() }; window.__shLog.push(o); if (window.__shNote) { try { window.__shNote(o); } catch (e3) {} } try { console.log('[MODO]', JSON.stringify(o)); } catch (e2) {} }
+      try { var out = await once(key, model, msgs, opts); out.model = model; window.__shModel = model; lg('ok', out); ov[model] = 0; return out; }
       catch (e) {
-        last = e;
+        last = e; lg(e.code || 'error', e);
         if (e.code === 'cancelled') throw e;
         if (e.code === 'model_missing') { dead[model] = 1; continue; }
+        if (e.code === 'timeout') { cool[model] = Date.now() + 60000; continue; }
         if (e.code === 'rate_limited') { cool[model] = Date.now() + Math.min(Math.max(e.retry || 20, 5), 70) * 1000; continue; }
         if (e.code === 'no_credit') { dead[model] = 1; continue; }          /* daily quota of this model is gone */
-        if (e.code === 'overloaded') { cool[model] = Date.now() + 3000; continue; }
+        if (e.code === 'overloaded') { ov[model] = (ov[model] || 0) + 1; cool[model] = Date.now() + Math.min(2000 * ov[model], 15000); continue; }
         throw e;
       }
     }
@@ -1688,6 +1708,7 @@ const SHA_PICU={patient:{name:"",age:"",sex:"",admission:"",diagnosis:"",date:""
 const SHB_T={plans:[{category:"Breathing",diagnosis:"",goal:"",interventions:{assessment:[""],non_pharmacological:[""],pharmacological:[""],documentation:[""]},outcome:""}],health_education:{general:[{item:"",education:"",remarks:""}],specific:[{item:"",education:"",remarks:""}]}};
 function shSysA0(k){return SH_RULES+(k==="picu"?"TASK: complete the PICU assessment sheet. present_history and family_history: write them as short paragraphs from the scenario. growth.formula: show the standard estimation formulas applied to the child's age (weight kg: 3-12 months = (age in months + 9)/2; 1-5 years = (age in years x 2) + 8; 6-12 years = (age in years x 7 - 5)/2; height cm: 2-12 years = (age in years x 6) + 77) with the calculated result if the age is known. feeding/devices flags are true/false from the scenario. abg: one or more rows; if no gases are in the scenario put '-' in every field including 'interpretation'. medication: list the drugs in the scenario, otherwise typical drugs for the diagnosis with ' (suggested)' after the name. actual_care: 6-10 rows (airway/breathing, hemodynamics, ventilation/devices, medications, fluids/nutrition, skin/hygiene, safety, psychological support/family) with remarks. Fill exactly this JSON structure: ":"TASK: complete the Pediatric sheet (Medical/Surgical) Nursing Record. Developmental fields (sitting, standing, walking, bladder, bowel): give the child's status if mentioned, otherwise '-'. 'remarks' = short nursing remarks interpreting the findings for the age. medication: list the drugs in the scenario, otherwise typical drugs for the diagnosis with ' (suggested)' after the name. labs: include the investigations in the scenario with normal value and patient value, and add the usual labs for the diagnosis with patient value '-'. actual_care: 6-10 rows (breathing, circulation, medications, nutrition/fluids, hygiene/skin, safety, psychological support, family) with remarks. Fill exactly this JSON structure: ")+JSON.stringify(k==="picu"?SHA_PICU:SHA_MS)}
 
+function shNorm(j){if(!j||typeof j!=="object")return j;const lc=o=>Array.isArray(o)?o.map(lc):(o&&typeof o==="object")?Object.fromEntries(Object.entries(o).map(([a,b])=>[a.trim().toLowerCase().replace(/[\s\-]+/g,"_"),lc(b)])):o;j=lc(j);for(let n=0;n<3&&!j.patient&&!j.record;n++){const v=Object.values(j).find(x=>x&&typeof x==="object"&&!Array.isArray(x)&&(x.patient||x.record||x.medication));if(!v)break;j=v}return j}
 const SH_SPLIT="Fill exactly this JSON structure: ";
 function shSysA(k,part){const b=shSysA0(k);if(k==="picu"||!part)return b;const i=b.lastIndexOf(SH_SPLIT);const T=part===1?{patient:SHA_MS.patient,record:SHA_MS.record,therapeutic:SHA_MS.therapeutic}:{medication:SHA_MS.medication,labs:SHA_MS.labs,actual_care:SHA_MS.actual_care};return b.slice(0,i)+"Return ONLY the keys of the structure below (nothing else). Every patient-specific value must be copied from the scenario or from the FACTS list, never left empty. "+SH_SPLIT+JSON.stringify(T)}
 const shOkA2=j=>!!(j&&Array.isArray(j.medication)&&j.medication.length&&Array.isArray(j.labs)&&j.labs.length>=2&&Array.isArray(j.actual_care)&&j.actual_care.length>=4&&shLeaf([j.medication,j.labs])>=8);
@@ -1748,23 +1769,41 @@ function shFull(){return'<!doctype html><html><head><meta charset="utf-8"><title
 function shPrint(){return}
 function shDoc(){return}
 function shCopy(){return}
-function sheets(){const k=st.shk||"ms",b=st.shb;return`<style>${SH_CSS}.shr{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--bd,#cbd5e1);border-radius:12px;margin:6px 0;cursor:pointer;font-weight:700}.shr input{width:18px;height:18px}.shnc,.shnc *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}@media print{.shnc,.shx{display:none!important}}</style><h2>📋 ${L("مساعد الشيتات","Sheet assistant")}</h2><p class="sub">${L("اختار نوع الشيت، اكتب السيناريو، واضغط SOLVE SHEET","Choose the sheet type, write the scenario, then press SOLVE SHEET")}</p><b>1) ${L("نوع الشيت","Sheet type")}</b><label class="shr"><input type="radio" name="shk" ${k==="ms"?"checked":""} onchange="st.shk='ms';render()"> Medical / Surgical</label><label class="shr"><input type="radio" name="shk" ${k==="picu"?"checked":""} onchange="st.shk='picu';render()"> PICU</label><b style="display:block;margin-top:10px">2) ${L("ادخل السيناريو المرتبط بالحالة اللي تعرضت لها في المستشفى","Enter the scenario of the case you met in the hospital")}</b><textarea id="sh_s" rows="8" oninput="st.shs=this.value" placeholder="${L("اكتب الحالة بالتفصيل: اسم الطفل وسنه وجنسه وتاريخ الدخول والتشخيص والشكوى والتاريخ المرضي والعلامات الحيوية والتحاليل والأدوية والعلاج…","Write the case in detail: name, age, sex, admission date, diagnosis, complaint, history, vital signs, labs, medications, treatment…")}">${E(st.shs||"")}</textarea><button class="btn" ${b?"disabled":""} onclick="shSolve()">${b?"⏳ …":"SOLVE SHEET"}</button><p id="sh_st" class="note" style="margin-top:8px">${st.shm?E(st.shm):b?L("بجهّز الاتصال بـ Gemini…","Connecting to Gemini…"):""}</p>${st.sheet&&!b?`<div class="ctl" style="margin:10px 0"><button class="btn alt" onclick="st.sheet=null;st.shs='';render()">${L("شيت جديد","New sheet")}</button></div><p class="note">${L("الحقول اللي مش في السيناريو مكتوب فيها شرطة (-)، كمّلها من ملف المريض الفعلي قبل التسليم.","Fields missing from the scenario show a dash (-); complete them from the patient's file before submitting.")}</p><div class="shnc" style="overflow-x:auto" oncopy="return false" oncut="return false" oncontextmenu="return false" ondragstart="return false">${shHTML(st.sheet)}</div>`:""}`}
-async function shSolve(){const sc=(st.shs||"").trim();if(sc.length<15){alert(L("اكتب السيناريو بالتفصيل الأول","Write the scenario in detail first"));return}const k=st.shk||"ms";st.shb=1;st.sheet=null;st.shm="";render();const S=t=>{const e=document.getElementById("sh_st");if(e)e.textContent=t};
+function sheets(){const k=st.shk||"ms",b=st.shb;return`<style>${SH_CSS}.shr{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--bd,#cbd5e1);border-radius:12px;margin:6px 0;cursor:pointer;font-weight:700}.shr input{width:18px;height:18px}.shnc,.shnc *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}@media print{.shnc,.shx{display:none!important}}</style><h2>📋 ${L("مساعد الشيتات","Sheet assistant")}</h2><p class="sub">${L("اختار نوع الشيت، اكتب السيناريو، واضغط SOLVE SHEET","Choose the sheet type, write the scenario, then press SOLVE SHEET")}</p><b>1) ${L("نوع الشيت","Sheet type")}</b><label class="shr"><input type="radio" name="shk" ${k==="ms"?"checked":""} onchange="st.shk='ms';render()"> Medical / Surgical</label><label class="shr"><input type="radio" name="shk" ${k==="picu"?"checked":""} onchange="st.shk='picu';render()"> PICU</label><b style="display:block;margin-top:10px">2) ${L("ادخل السيناريو المرتبط بالحالة اللي تعرضت لها في المستشفى","Enter the scenario of the case you met in the hospital")}</b><textarea id="sh_s" rows="8" oninput="st.shs=this.value" placeholder="${L("اكتب الحالة بالتفصيل: اسم الطفل وسنه وجنسه وتاريخ الدخول والتشخيص والشكوى والتاريخ المرضي والعلامات الحيوية والتحاليل والأدوية والعلاج…","Write the case in detail: name, age, sex, admission date, diagnosis, complaint, history, vital signs, labs, medications, treatment…")}">${E(st.shs||"")}</textarea><button class="btn" ${b?"disabled":""} onclick="shSolve()">${b?"⏳ …":"SOLVE SHEET"}</button><p id="sh_st" class="note" style="margin-top:8px">${st.shm?E(st.shm):b?L("بجهّز الاتصال…","Connecting…"):""}</p>${st.sheet&&!b?`<div class="ctl" style="margin:10px 0"><button class="btn alt" onclick="st.sheet=null;st.shs='';render()">${L("شيت جديد","New sheet")}</button></div><p class="note">${L("الحقول اللي مش في السيناريو مكتوب فيها شرطة (-)، كمّلها من ملف المريض الفعلي قبل التسليم.","Fields missing from the scenario show a dash (-); complete them from the patient's file before submitting.")}</p><div class="shnc" style="overflow-x:auto" oncopy="return false" oncut="return false" oncontextmenu="return false" ondragstart="return false">${shHTML(st.sheet)}</div>`:""}`}
+async function shSolve(){const sc=(st.shs||"").trim();if(sc.length<15){alert(L("اكتب السيناريو بالتفصيل الأول","Write the scenario in detail first"));return}const k=st.shk||"ms";st.shb=1;st.sheet=null;st.shm="";render();let T0=Date.now();const draw=()=>{const e=document.getElementById("sh_st");if(e){const w=window.__shWait||0;e.textContent=L("⏳ شغال… ","⏳ Working… ")+Math.round((Date.now()-T0)/1000)+L(" ث"," s")+(w>0?L(" — استنى "+w+" ث (حد المفتاح المجاني)"," — waiting "+w+"s (free-tier limit)"):"")}};const S=t=>{draw()};
+const TM=setInterval(draw,1000);
 try{const f=await window.claude.use("sample");
-const call=(msgs,tag,json)=>f(msgs,{modelTier:"complex",json:json,temp:.3,onWait:t=>S(t?L("حد الاستخدام المجاني… استنى "+t+" ث","Free-tier limit… waiting "+t+"s"):tag)});
-const ask=async(sys,usr,ok,tag,strict)=>{S(tag);let j=null,json=true;for(let i=0;i<3;i++){let r;try{r=await call([{role:"system",content:sys},{role:"user",content:usr+(i?"\n\nYour previous answer was invalid, truncated, left fields empty although the scenario contains the values, or broke the rules. Return the corrected, complete JSON only, with the exact keys and nesting of the structure, every value from the scenario filled in, and every value concise.":"")}],tag,json)}catch(e){if(e&&e.code==="http_400"&&json){json=false;i--;continue}throw e}
-const tx=typeof r==="string"?r:(r&&(r.text||r.content))||"",tr=!!(r&&r.truncated),p=shJSON(tx);window.__shLast=tx;if(p&&(!j||!tr))j=p;if(p&&!tr&&ok(p))return p}
+const call=(msgs,tag,json,bo)=>f(msgs,{modelTier:"complex",boost:false,json:json,temp:.3,onWait:t=>{window.__shWait=t;S(tag)}});
+const ask=async(sys,usr,ok,tag,strict)=>{S(tag);let j=null,json=true;for(let i=0;i<3;i++){let r;try{r=await call([{role:"system",content:sys},{role:"user",content:usr+(i?"\n\nYour previous answer was invalid, truncated, left fields empty although the scenario contains the values, or broke the rules. Return the corrected, complete JSON only, with the exact keys and nesting of the structure, every value from the scenario filled in, and every value concise.":"")}],tag,json,i>0)}catch(e){if(e&&e.code==="http_400"&&json){json=false;i--;continue}throw e}
+const tx=typeof r==="string"?r:(r&&(r.text||r.content))||"",tr=!!(r&&r.truncated),p=shNorm(shJSON(tx));window.__shLast=tx;if(p&&(!j||!tr))j=p;if(p&&!tr&&ok(p))return p}
 if(j&&!strict)return j;throw{code:"bad_json"}};
 const FX=shFacts(shLocal(sc)),fb=FX?"\n\nFACTS (extracted from the scenario, copy them exactly into the matching fields):\n"+FX:"";
-const a=await ask(shSysA(k),"SCENARIO:\n"+sc+fb,j=>shOkA(j,k)&&(k==="picu"||shOkA2(j)),L("1/3 — بحل بيانات الشيت (الـ record والأدوية والتحاليل)…","1/3 — Solving the record, medications and labs…"),1);
+const TG=L("بحل الشيت (الـ record والأدوية والتحاليل والـ care plans)…","Solving the sheet (record, meds, labs, care plans)…"),U2="SCENARIO:\n"+sc+"\n\nUse the diagnosis exactly as stated in the scenario.";
+const slp=ms=>new Promise(r=>setTimeout(r,ms));
+const DL=new Promise((_,rj)=>setTimeout(()=>rj({code:"timeout"}),170000));
+const [a,bp,bh]=await Promise.race([DL,Promise.all([ask(shSysA(k),"SCENARIO:\n"+sc+fb,j=>shOkA(j,k)&&(k==="picu"||shOkA2(j)),TG),slp(2500).then(()=>ask(shSysP(k),U2,shOkP,TG)),slp(5000).then(()=>ask(shSysH(k),U2,shOkH,TG))])]);
 shFill(a,sc,k);
-const u2="SCENARIO:\n"+sc+"\n\nDIAGNOSIS: "+((a.patient&&a.patient.diagnosis)||"");
-const bp=await ask(shSysP(k),u2,shOkP,L("2/3 — بكتب الـ nursing care plans…","2/3 — Writing the nursing care plans…"));
-const bh=await ask(shSysH(k),u2,shOkH,L("3/3 — بكتب الـ health education…","3/3 — Writing the health education…"));
+if(k!=="picu"&&(!Array.isArray(a.medication)||!a.medication.length||!Array.isArray(a.labs)||!a.labs.length||!Array.isArray(a.actual_care)||!a.actual_care.length)){const a2=await ask(shSysA(k,2),"SCENARIO:\n"+sc+"\n\nDIAGNOSIS: "+((a.patient&&a.patient.diagnosis)||""),shOkA2,L("1/3 — بكمّل الأدوية والتحاليل…","1/3 — Completing medication and labs…"));["medication","labs","actual_care"].forEach(x=>{if(Array.isArray(a2[x])&&a2[x].length&&(!Array.isArray(a[x])||!a[x].length))a[x]=a2[x]})}
+if(k!=="picu"){try{
+a.record=a.record||{};const R=a.record,emp=v=>v==null||String(v).trim()===""||String(v).trim()==="-"||/^not mentioned/i.test(String(v).trim());
+const G={feeding:["breast","artificial","ordinary","special","remarks"],activity:["value","remarks"],intake:["kind","amount","remarks"],output:["stool_freq","normal_habit","abnormal_habit","consistency","abnormal_consistency","remarks"]};
+const miss=Object.keys(G).filter(g=>{const o=R[g]||{};return G[g].filter(x=>x!=="remarks").every(x=>emp(o[x]))});
+const gr=R.growth||{},needGr=emp(gr.bladder)||emp(gr.bowel);
+if(miss.length||needGr){
+S(TG);
+const T={record:{growth:{bladder:"",bowel:""}}};miss.forEach(g=>{T.record[g]=Object.fromEntries(G[g].map(x=>[x,""]))});
+const sysR=SH_RULES+"TASK: extract ONLY the following parts of the Nursing Record from the scenario (the scenario may be in Arabic, English or mixed; translate values to English). Read the WHOLE scenario carefully: feeding = breast / artificial (bottle, formula) / ordinary (family food) / special (NPO, diet, tube feeding, TPN); activity = the child's activity state (e.g. active, playful, irritable, lethargic, bed rest, restless, weak) ; intake = kind (oral fluids, IV fluids, breast milk, etc.) and amount (volume per day or per feed); output = stool frequency, normal habit, abnormal habit (diarrhea, constipation, vomiting, none), consistency, abnormal consistency, plus urine if mentioned inside remarks; growth.bladder and growth.bowel = bladder / bowel control status. Copy every value the scenario states or clearly implies (for example 'on NPO' means special feeding: NPO; 'receiving IV fluids 500 ml' means intake kind: IV fluids, amount: 500 ml; 'watery stool 5 times' means abnormal habit: diarrhea, frequency: 5 times/day, consistency: watery). Write '-' ONLY when the scenario truly says nothing related. 'remarks' = one short nursing remark interpreting the findings for the child's age. Return ONLY the keys of this structure: "+JSON.stringify(T);
+const r=await ask(sysR,"SCENARIO:\n"+sc,j=>!!(j&&j.record&&shLeaf(j.record)>=1),TG,false);
+if(r&&r.record){const put=(o,key,v)=>{if(o&&!emp(v)&&emp(o[key]))o[key]=v};
+miss.forEach(g=>{R[g]=R[g]||{};G[g].forEach(x=>put(R[g],x,(r.record[g]||{})[x]))});
+Object.keys(G).forEach(g=>{if(!miss.includes(g)&&r.record[g]&&R[g]&&emp(R[g].remarks))put(R[g],"remarks",r.record[g].remarks)});
+R.growth=R.growth||{};["bladder","bowel"].forEach(x=>put(R.growth,x,(r.record.growth||{})[x]))}}
+}catch(e2){console.warn("[MODO] extra record pass failed",e2)}}
+if(!a.patient)a.patient={};
 const b=Object.assign({},bp,bh);
 b.plans=(b.plans||[]).map((p,i)=>[p,i]).sort((x,y)=>shRank(x[0])-shRank(y[0])||x[1]-y[1]).map(x=>x[0]).slice(0,3);st.sheet={k,a,b}}
-catch(e){const c=(e&&e.code)||"",M={no_key:L("محتاج مفتاح Gemini عشان أحل الشيت.","A Gemini key is required."),cancelled:L("اتلغى ربط المفتاح.","Key setup was cancelled."),invalid_key:L("المفتاح غير صحيح، دوس SOLVE SHEET وادخل مفتاح Gemini صحيح.","The key is invalid. Press SOLVE SHEET and enter a valid Gemini key."),rate_limited:L("وصلت لحد الاستخدام المجاني في الدقيقة، استنى دقيقة وجرّب تاني.","Free-tier per-minute limit reached. Wait a minute and try again."),no_credit:L("خلصت الحصة اليومية المجانية للمفتاح ده.","The daily free quota of this key is used up."),net:L("مشكلة في الإنترنت أو في الاتصال بـ Google.","Network problem or Google could not be reached."),region:L("Gemini مش متاح في منطقتك لمفتاح الحساب ده.","Gemini is not available in your region for this key."),forbidden:L("المفتاح ده مش مسموح له يستخدم Gemini API.","This key is not allowed to use the Gemini API."),overloaded:L("سيرفر Gemini مشغول، جرّب بعد شوية.","Gemini servers are busy, try again shortly."),empty:L("Gemini رجّع رد فاضي، جرّب تاني.","Gemini returned an empty reply, try again."),bad_json:L("رد الذكاء الاصطناعي جه ناقص أو بصيغة غلط، جرّب تاني.","The AI reply was incomplete or malformed, try again.")};st.shm=(M[c]||L("حصلت مشكلة غير متوقعة.","Unexpected problem."))+" ["+(c||(e&&e.message)||"error")+"]"+(e&&e.message&&c&&!M[c]?" "+String(e.message).slice(0,140):"")}
-st.shb=0;render()}
+catch(e){const c=(e&&e.code)||"",M={no_key:L("محتاج مفتاح تفعيل عشان أحل الشيت.","An activation key is required."),cancelled:L("اتلغى ربط المفتاح.","Key setup was cancelled."),invalid_key:L("المفتاح غير صحيح، دوس SOLVE SHEET وادخل مفتاح صحيح.","The key is invalid. Press SOLVE SHEET and enter a valid key."),rate_limited:L("وصلت لحد الاستخدام المجاني في الدقيقة، استنى دقيقة وجرّب تاني.","Free-tier per-minute limit reached. Wait a minute and try again."),no_credit:L("خلصت الحصة اليومية المجانية للمفتاح ده.","The daily free quota of this key is used up."),net:L("مشكلة في الإنترنت أو في الاتصال بـ Google.","Network problem or Google could not be reached."),region:L("الخدمة مش متاحة في منطقتك.","The service is not available in your region."),forbidden:L("المفتاح ده مش مسموح له يستخدم الخدمة.","This key is not allowed to use the service."),overloaded:L("الخدمة مشغولة، جرّب بعد شوية.","The service is busy, try again shortly."),empty:L("الخدمة رجّعت رد فاضي، جرّب تاني.","The service returned an empty reply, try again."),timeout:L("الخدمة اتأخرت أوي ومردّتش. جرّب تاني أو اختار سيناريو أقصر.","The service took too long. Try again or shorten the scenario."),bad_json:L("رد الذكاء الاصطناعي جه ناقص أو بصيغة غلط، جرّب تاني.","The AI reply was incomplete or malformed, try again.")};st.shm=(M[c]||L("حصلت مشكلة غير متوقعة.","Unexpected problem."))+" ["+(c||(e&&e.message)||"error")+"]"+(c==="bad_json"?" | RAW: "+String(window.__shLast||"").slice(0,400):"")+(e&&e.message&&c&&!M[c]?" "+String(e.message).slice(0,140):"")}
+clearInterval(TM);window.__shNote=null;st.shb=0;render()}
 
 var aiBusy=false;
 function aiMd(t){var h=E(t).replace(/\*\*([^*\n]+)\*\*/g,"<b>$1</b>").replace(/`([^`\n]+)`/g,"<code>$1</code>"),o="",ul=0;h.split("\n").forEach(function(l){var m=/^\s*(?:[-*•]|\d+[.)])\s+(.*)$/.exec(l);if(m){if(!ul){o+="<ul>";ul=1}o+="<li>"+m[1]+"</li>"}else{if(ul){o+="</ul>";ul=0}if(l.trim())o+="<p>"+l+"</p>"}});if(ul)o+="</ul>";return o}
