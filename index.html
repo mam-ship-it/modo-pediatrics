@@ -3139,8 +3139,10 @@ function idbDel(id){return idbRun('readwrite',function(s){return s.delete(id)})}
 
 /* ---------- archive (Supabase Storage — مشاهدة فقط للطلاب) ---------- */
 var CL={admin:false,list:[],flt:''};
+try{window.addEventListener('modo-auth',function(){try{sessionStorage.removeItem('modop_lp')}catch(e){}CL.admin=false})}catch(e){}
+try{sessionStorage.removeItem('modop_lp')}catch(e){}
 (function(){var st=document.createElement('style');st.textContent='.wb-pl{position:relative;background:#000;border-radius:10px;overflow:hidden}.wb-pl video{width:100%;display:block;max-height:70vh}.wb-wm{position:absolute;pointer-events:none;user-select:none;color:#fff;opacity:.26;font:700 13px sans-serif;text-shadow:0 0 3px #000;white-space:nowrap;transition:top 1.2s,left 1.2s;z-index:3}.wb-pc{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}.wb-pc button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 10px}.wb-pc button.on{background:var(--teal);color:#fff;border-color:var(--teal)}.wb-pg{height:4px;background:#0003;border-radius:4px;margin-top:6px;overflow:hidden}.wb-pg i{display:block;height:100%;background:var(--teal)}.wb-bdg{display:inline-block;font-size:.72rem;font-weight:800;border-radius:6px;padding:1px 7px;margin:2px 3px 0 0;background:#e6f7ee;color:#157347}.wb-bdg.w{background:#fff3cd;color:#8a5a00}.wb-card .ac2{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.wb-card .ac2 button{flex:1 1 30px;height:30px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;font-size:.85rem}.wb-qs{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:9px 12px;font:inherit}';document.head.appendChild(st)})();
-function clFn(d){var c=window.MODOGATE&&MODOGATE.cred&&MODOGATE.cred(),ap='';try{ap=sessionStorage.getItem('modop_ap')||''}catch(e){}
+function clFn(d){var c=window.MODOGATE&&MODOGATE.cred&&MODOGATE.cred(),ap='';try{ap=sessionStorage.getItem('modop_lp')||''}catch(e){}
  var body=Object.assign({},d,c?{code:c.code,tok:c.tok,dev:c.dev}:{},ap?{pass:ap}:{});
  return fetch(MODO_SB.url+'/functions/v1/lectures',{method:'POST',headers:{'Content-Type':'application/json',apikey:MODO_SB.key,Authorization:'Bearer '+MODO_SB.key},body:JSON.stringify(body)}).then(function(r){return r.json()}).catch(function(){return{ok:false,err:'net'}})}
 function clAsk(){return new Promise(function(res){var o=document.createElement('div');o.className='wb-modal';o.style.zIndex=99999;
@@ -3148,11 +3150,11 @@ function clAsk(){return new Promise(function(res){var o=document.createElement('
  document.body.appendChild(o);var i=o.querySelector('#clPw');setTimeout(function(){i.focus()},50);
  function done(v){o.remove();res(v)}
  function go(){var v=i.value;if(!v)return;var b=o.querySelector('#clOk');b.disabled=true;b.textContent='جارٍ التحقق…';
-  try{sessionStorage.setItem('modop_ap',v)}catch(e){}
-  clFn({a:'check'}).then(function(r){if(r&&r.ok&&r.admin){CL.admin=true;done(true)}else{try{sessionStorage.removeItem('modop_ap')}catch(e){}b.disabled=false;b.textContent='دخول';o.querySelector('#clPwE').textContent=(r&&r.err==='net')?'تعذّر الاتصال ❌':'الباسورد غير صحيح ❌';i.value='';i.focus()}})}
+  try{sessionStorage.setItem('modop_lp',v)}catch(e){}
+  clFn({a:'check'}).then(function(r){if(r&&r.ok&&r.admin){CL.admin=true;done(true)}else{try{sessionStorage.removeItem('modop_lp')}catch(e){}b.disabled=false;b.textContent='دخول';o.querySelector('#clPwE').textContent=(r&&r.err==='net')?'تعذّر الاتصال ❌':'الباسورد غير صحيح ❌';i.value='';i.focus()}})}
  o.querySelector('#clOk').onclick=go;o.querySelector('#clNo').onclick=function(){done(false)};
  i.onkeydown=function(e){if(e.key==='Enter')go();else if(e.key==='Escape')done(false)}})}
-function clAdmin(force){var ap='';try{ap=sessionStorage.getItem('modop_ap')||''}catch(e){}
+function clAdmin(force){var ap='';try{ap=sessionStorage.getItem('modop_lp')||''}catch(e){}
  if(ap&&!force)return Promise.resolve(true);return clAsk()}
 function clPut(url,blob,onp){return new Promise(function(res,rej){var x=new XMLHttpRequest(),fd=new FormData();fd.append('cacheControl','3600');fd.append('',blob);
  x.open('PUT',url);x.setRequestHeader('x-upsert','false');
@@ -3171,6 +3173,7 @@ function clSay(r,ok){return r&&r.ok?ok:'تعذّرت العملية'}
 WB.ren=function(id,t){var n=prompt('اسم المحاضرة:',t||'');if(n&&n.trim())clFn({a:'meta',id:id,title:n.trim().slice(0,90)}).then(arcRender)};
 WB.del=function(id){if(!confirm('حذف هذه المحاضرة نهائيًا من المنصة؟'))return;clFn({a:'del',id:id}).then(arcRender)};
 WB.adm=function(){clAdmin(true).then(arcRender)};
+WB.out=function(){try{sessionStorage.removeItem('modop_lp')}catch(e){}CL.admin=false;toast('خرجت من وضع المحاضر');arcRender()};
 WB.hide=function(id,h){clFn({a:'meta',id:id,hidden:!!h}).then(function(){toast(h?'اتخفت عن الطلاب 🙈':'ظهرت للطلاب 👁');arcRender()})};
 WB.pin=function(id){clFn({a:'pin',id:id}).then(function(){toast('اتثبتت في الأول 📌');arcRender()})};
 WB.mv=function(id,d){var ids=CL.list.map(function(x){return x.id}),i=ids.indexOf(id),j=i+d;if(i<0||j<0||j>=ids.length)return;var t=ids[i];ids[i]=ids[j];ids[j]=t;clFn({a:'order',ids:ids}).then(arcRender)};
@@ -3224,7 +3227,7 @@ function arcRender(){
   if(!q('#wbArc'))return;
   if(!r.ok){box.innerHTML='<p class="sub">'+(r.err==='auth'?'🔒 سجّل دخول بكودك عشان تشوف المحاضرات.':'تعذّر تحميل الأرشيف، اتأكد من الإنترنت.')+'</p><button onclick="WB.adm()">🔑 دخول المحاضر</button>';return}
   CL.admin=!!r.admin;CL.list=r.items||[];var c=q('#wbCnt');if(c)c.textContent=CL.list.length?'('+CL.list.length+')':'';
-  var h='<div style="display:flex;gap:8px;margin-bottom:10px;align-items:center"><input class="wb-qs" id="wbQs" type="search" placeholder="🔍 دوّر على محاضرة بالاسم…" value="'+esc(CL.flt)+'" oninput="WB.q(this.value)">'+(CL.admin?'<span class="sub" style="white-space:nowrap">🔑 وضع المحاضر</span>':'<button onclick="WB.adm()" style="opacity:.6;white-space:nowrap">🔑 دخول المحاضر</button>')+'</div><div id="wbGrid"></div>';
+  var h='<div style="display:flex;gap:8px;margin-bottom:10px;align-items:center"><input class="wb-qs" id="wbQs" type="search" placeholder="🔍 دوّر على محاضرة بالاسم…" value="'+esc(CL.flt)+'" oninput="WB.q(this.value)">'+(CL.admin?'<span class="wb-bdg" style="white-space:nowrap;font-size:.8rem;padding:6px 10px">✅ وضع المحاضر مفعّل</span><button onclick="WB.out()" style="white-space:nowrap">خروج</button>':'<button onclick="WB.adm()" style="opacity:.6;white-space:nowrap">🔑 دخول المحاضر</button>')+'</div><div id="wbGrid"></div>';
   if(CL.admin&&loc.length)h+='<h4 style="margin:16px 0 6px">محاضرات على هذا الجهاز فقط (ارفعها عشان الطلاب تشوفها)</h4><div class="wb-arc">'+loc.map(function(x){return'<div class="wb-card"><div class="th"'+(x.thumb?' style="background-image:url('+x.thumb+')"':'')+'><span class="du">'+fmt(x.dur||0)+'</span></div><div class="bd"><b>'+esc(x.title)+'</b><small>'+mb(x.size||0)+'</small><div class="ac"><button id="wbU'+x.id+'" title="رفع للمنصة" onclick="WB.up('+x.id+')">☁️</button></div></div></div>'}).join('')+'</div>';
   box.innerHTML=h;drawArc();var est=q('#wbEst');if(est)est.textContent=''})}
 
