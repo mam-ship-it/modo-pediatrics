@@ -3115,32 +3115,63 @@ function saveDlg(blob,dur,th){
  vidFix(q('video',o));
  function title(){return(q('#wbTitle',o).value||def).trim()}
   q('#wbDs',o).onclick=function(){if(confirm('تجاهل التسجيل نهائيًا؟'))o.close()};
- q('#wbSv',o).onclick=function(){var b=this;b.disabled=true;b.textContent='جارٍ الحفظ…';
-  idbPut({id:Date.now(),title:title(),created:Date.now(),dur:dur,size:blob.size,type:blob.type,blob:blob,thumb:th}).then(function(){
-   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
-   o.close();toast('اتحفظ في الأرشيف ✅');WB.tab='arc';try{if(st.v==='wb')WB.show('arc');else go('wb')}catch(e){go('wb')}
-  }).catch(function(){b.disabled=false;b.textContent='💾 حفظ في الأرشيف';alert('تعذّر الحفظ في الأرشيف (المساحة ممتلئة أو التصفح الخاص). نزّل الفيديو على جهازك بدل كده.')})}}
+ q('#wbSv',o).onclick=function(){var b=this;
+  clAdmin().then(function(ok){if(!ok)return;b.disabled=true;b.textContent='جارٍ الرفع… 0%';
+   clUpload(blob,{title:title(),dur:Math.round(dur/1000),thumb:th},function(p){b.textContent='جارٍ الرفع… '+p+'%'}).then(function(){
+    o.close();toast('اترفع على المنصة ✅ الطلاب هيشوفوه');WB.tab='arc';try{if(st.v==='wb')WB.show('arc');else go('wb')}catch(e){go('wb')}
+   }).catch(function(e){
+    idbPut({id:Date.now(),title:title(),created:Date.now(),dur:dur,size:blob.size,type:blob.type,blob:blob,thumb:th}).then(function(){o.close();alert('تعذّر الرفع ('+((e&&e.message)||'')+'). اتحفظت المحاضرة على الجهاز، وتقدر ترفعها من الأرشيف بزرار ☁️.');WB.tab='arc';try{if(st.v==='wb')WB.show('arc');else go('wb')}catch(_){go('wb')}}).catch(function(){b.disabled=false;b.textContent='💾 حفظ في الأرشيف'})})})}}
 
-/* ---------- archive (IndexedDB) ---------- */
+/* ---------- archive (IndexedDB — مؤقت قبل الرفع) ---------- */
 function idb(){return new Promise(function(res,rej){var r=indexedDB.open('modo_wb',1);r.onupgradeneeded=function(){r.result.createObjectStore('lec',{keyPath:'id'})};r.onsuccess=function(){res(r.result)};r.onerror=function(){rej(r.error)}})}
 function idbRun(mode,fn){return idb().then(function(d){return new Promise(function(res,rej){var t=d.transaction('lec',mode),rq=fn(t.objectStore('lec'));t.oncomplete=function(){res(rq&&rq.result)};t.onerror=t.onabort=function(){rej(t.error)}})})}
 function idbPut(o){return idbRun('readwrite',function(s){return s.put(o)})}
 function idbAll(){return idbRun('readonly',function(s){return s.getAll()}).then(function(a){return(a||[]).sort(function(x,y){return y.created-x.created})})}
 function idbGet(id){return idbRun('readonly',function(s){return s.get(id)})}
 function idbDel(id){return idbRun('readwrite',function(s){return s.delete(id)})}
+/* ---------- archive (Supabase Storage — مشاهدة فقط للطلاب) ---------- */
+var CL={admin:false};
+function clFn(d){var c=window.MODOGATE&&MODOGATE.cred&&MODOGATE.cred(),ap='';try{ap=sessionStorage.getItem('modop_ap')||''}catch(e){}
+ var body=Object.assign({},d,c?{code:c.code,tok:c.tok,dev:c.dev}:{},ap?{pass:ap}:{});
+ return fetch(MODO_SB.url+'/functions/v1/lectures',{method:'POST',headers:{'Content-Type':'application/json',apikey:MODO_SB.key,Authorization:'Bearer '+MODO_SB.key},body:JSON.stringify(body)}).then(function(r){return r.json()}).catch(function(){return{ok:false,err:'net'}})}
+function clAsk(){return new Promise(function(res){var o=document.createElement('div');o.className='wb-modal';o.style.zIndex=99999;
+ o.innerHTML='<div class="wb-m" style="max-width:360px"><h3>🔑 دخول المحاضر</h3><p class="sub" style="margin:0 0 6px">اكتب باسورد لوحة المتابعة</p><input type="password" id="clPw" autocomplete="off" style="width:100%;margin:8px 0;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:10px 12px;font:inherit;text-align:center"><p id="clPwE" style="color:var(--bad);margin:0 0 8px;min-height:1.4em;font-weight:700"></p><div class="row"><button class="pri" id="clOk">دخول</button><button id="clNo">إلغاء</button></div></div>';
+ document.body.appendChild(o);var i=o.querySelector('#clPw');setTimeout(function(){i.focus()},50);
+ function done(v){o.remove();res(v)}
+ function go(){var v=i.value;if(!v)return;var b=o.querySelector('#clOk');b.disabled=true;b.textContent='جارٍ التحقق…';
+  try{sessionStorage.setItem('modop_ap',v)}catch(e){}
+  clFn({a:'check'}).then(function(r){if(r&&r.ok&&r.admin){CL.admin=true;done(true)}else{try{sessionStorage.removeItem('modop_ap')}catch(e){}b.disabled=false;b.textContent='دخول';o.querySelector('#clPwE').textContent=(r&&r.err==='net')?'تعذّر الاتصال ❌':'الباسورد غير صحيح ❌';i.value='';i.focus()}})}
+ o.querySelector('#clOk').onclick=go;o.querySelector('#clNo').onclick=function(){done(false)};
+ i.onkeydown=function(e){if(e.key==='Enter')go();else if(e.key==='Escape')done(false)}})}
+function clAdmin(force){var ap='';try{ap=sessionStorage.getItem('modop_ap')||''}catch(e){}
+ if(ap&&!force)return Promise.resolve(true);return clAsk()}
+function clUpload(blob,meta,onp){
+ return clFn({a:'up',type:blob.type}).then(function(r){if(!r.ok)throw new Error(r.err==='auth'?'auth':'up');
+  return new Promise(function(res,rej){var x=new XMLHttpRequest(),fd=new FormData();fd.append('cacheControl','3600');fd.append('',blob);
+   x.open('PUT',r.url);x.setRequestHeader('x-upsert','false');
+   x.upload.onprogress=function(e){if(e.lengthComputable&&onp)onp(Math.round(e.loaded/e.total*100))};
+   x.onload=function(){x.status>=200&&x.status<300?res(r):rej(new Error('put '+x.status+' '+x.responseText))};x.onerror=function(){rej(new Error('net'))};x.send(fd)})})
+ .then(function(r){return clFn(Object.assign({a:'commit',id:r.id,path:r.path,type:blob.type,size:blob.size},meta)).then(function(c){if(!c.ok)throw new Error('commit');return c})})}
+WB.dl=function(){};
+WB.ren=function(id,t){var n=prompt('اسم المحاضرة:',t||'');if(n&&n.trim())clFn({a:'rename',id:id,title:n.trim().slice(0,90)}).then(arcRender)};
+WB.del=function(id){if(!confirm('حذف هذه المحاضرة نهائيًا من المنصة؟'))return;clFn({a:'del',id:id}).then(arcRender)};
+WB.adm=function(){clAdmin(true).then(arcRender)};
+WB.up=function(id){clAdmin().then(function(ok){if(!ok)return;idbGet(id).then(function(r){if(!r)return;var b=q('#wbU'+id);if(b)b.disabled=true;
+ clUpload(r.blob,{title:r.title,dur:Math.round((r.dur||0)/1000),thumb:r.thumb},function(p){if(b)b.textContent=p+'%'}).then(function(){idbDel(id).then(function(){toast('اترفع للمنصة ✅');arcRender()})}).catch(function(e){if(b){b.disabled=false;b.textContent='☁️'}alert('تعذّر الرفع: '+(e&&e.message))})})})};
+WB.play=function(id){clFn({a:'play',id:id}).then(function(r){if(!r.ok){alert(r.err==='auth'?'سجّل دخول بكودك الأول عشان تشاهد المحاضرة.':'تعذّر تشغيل المحاضرة.');return}
+ var o=modal('<h3>'+esc(r.title)+'</h3><video controls controlslist="nodownload noremoteplayback" disablepictureinpicture disableremoteplayback oncontextmenu="return false" autoplay playsinline src="'+r.url+'"></video><div class="row" style="margin-top:10px"><button id="wbX">إغلاق</button></div>');
+ vidFix(q('video',o));q('#wbX',o).onclick=function(){o.close()};o.addEventListener('click',function(e){if(e.target===o)o.close()})})};
 function arcRender(){
  var box=q('#wbArc');if(!box)return;
- idbAll().then(function(list){
-  var c=q('#wbCnt');if(c)c.textContent=list.length?'('+list.length+')':'';
+ Promise.all([clFn({a:'list'}),idbAll().catch(function(){return[]})]).then(function(rs){var r=rs[0],loc=rs[1]||[];
   if(!q('#wbArc'))return;
-  if(!list.length){box.innerHTML='<p class="sub">لسه مفيش محاضرات في الأرشيف. اضغط «بدء التسجيل» من السبورة وأي محاضرة هتخلّصها هتتحفظ هنا كفيديو.</p>';return}
-  box.innerHTML='<div class="wb-arc">'+list.map(function(r){return'<div class="wb-card"><div class="th"'+(r.thumb?' style="background-image:url('+r.thumb+')"':'')+'><span class="du">'+fmt(r.dur)+'</span></div><div class="bd"><b>'+esc(r.title)+'</b><small>'+new Date(r.created).toLocaleString('ar-EG')+' · '+mb(r.size)+'</small><div class="ac"><button title="تشغيل" onclick="WB.play('+r.id+')">▶</button><button title="تغيير الاسم" onclick="WB.ren('+r.id+')">✏️</button><button title="حذف" onclick="WB.del('+r.id+')">🗑</button></div></div></div>'}).join('')+'</div>'
-  var est=q('#wbEst');if(est&&navigator.storage&&navigator.storage.estimate)navigator.storage.estimate().then(function(e){est.textContent='المساحة المستخدمة: '+mb(e.usage||0)+' من '+mb(e.quota||0)})
- }).catch(function(){var b=q('#wbArc');if(b)b.innerHTML='<p class="sub">الأرشيف غير متاح في هذا المتصفح (التصفح الخاص؟).</p>'})}
-WB.play=function(id){idbGet(id).then(function(r){if(!r)return;var u=URL.createObjectURL(r.blob);var o=modal('<h3>'+esc(r.title)+'</h3><video controls controlslist="nodownload noremoteplayback" disablepictureinpicture disableremoteplayback oncontextmenu="return false" autoplay playsinline data-u="'+u+'" src="'+u+'"></video><div class="row" style="margin-top:10px"><button id="wbX">إغلاق</button></div>');vidFix(q('video',o));q('#wbX',o).onclick=function(){o.close()};o.addEventListener('click',function(e){if(e.target===o)o.close()})})};
-WB.dl=function(){};
-WB.ren=function(id){idbGet(id).then(function(r){if(!r)return;var n=prompt('اسم المحاضرة:',r.title);if(n&&n.trim()){r.title=n.trim().slice(0,90);idbPut(r).then(arcRender)}})};
-WB.del=function(id){if(!confirm('حذف هذه المحاضرة نهائيًا؟'))return;idbDel(id).then(arcRender)};
+  if(!r.ok){box.innerHTML='<p class="sub">'+(r.err==='auth'?'🔒 سجّل دخول بكودك عشان تشوف المحاضرات.':'تعذّر تحميل الأرشيف، اتأكد من الإنترنت.')+'</p><button onclick="WB.adm()">🔑 دخول المحاضر</button>';return}
+  CL.admin=!!r.admin;var list=r.items||[],c=q('#wbCnt');if(c)c.textContent=list.length?'('+list.length+')':'';
+  var h='<div style="margin-bottom:10px;text-align:left">'+(CL.admin?'<span class="sub">🔑 وضع المحاضر</span>':'<button onclick="WB.adm()" style="opacity:.6">🔑 دخول المحاضر</button>')+'</div>';
+  h+=list.length?'<div class="wb-arc">'+list.map(function(x){return'<div class="wb-card"><div class="th"'+(x.thumb?' style="background-image:url('+x.thumb+')"':'')+'><span class="du">'+fmt((x.dur||0)*1000)+'</span></div><div class="bd"><b>'+esc(x.title)+'</b><small>'+new Date(x.created_at).toLocaleString('ar-EG')+' · '+mb(x.size||0)+'</small><div class="ac"><button title="تشغيل" onclick="WB.play(\''+x.id+'\')">▶</button>'+(CL.admin?'<button title="تغيير الاسم" onclick="WB.ren(\''+x.id+'\',this.dataset.t)" data-t="'+esc(x.title)+'">✏️</button><button title="حذف" onclick="WB.del(\''+x.id+'\')">🗑</button>':'')+'</div></div></div>'}).join('')+'</div>':'<p class="sub">لسه مفيش محاضرات في الأرشيف.</p>';
+  if(CL.admin&&loc.length)h+='<h4 style="margin:16px 0 6px">محاضرات على هذا الجهاز فقط (ارفعها عشان الطلاب تشوفها)</h4><div class="wb-arc">'+loc.map(function(x){return'<div class="wb-card"><div class="th"'+(x.thumb?' style="background-image:url('+x.thumb+')"':'')+'><span class="du">'+fmt(x.dur||0)+'</span></div><div class="bd"><b>'+esc(x.title)+'</b><small>'+mb(x.size||0)+'</small><div class="ac"><button id="wbU'+x.id+'" title="رفع للمنصة" onclick="WB.up('+x.id+')">☁️</button></div></div></div>'}).join('')+'</div>';
+  box.innerHTML=h;var est=q('#wbEst');if(est)est.textContent=''})}
+
 
 /* ---------- floating dock (visible on every page while recording / annotating) ---------- */
 function dockEnsure(){
@@ -3220,7 +3251,7 @@ window.wbView=function(){
  +'<button class="wb-b txt" id="wbCamBtn" onclick="WB.act(\'cam\')">📷 الكاميرا</button><button class="wb-b txt" id="wbOvBtn" onclick="WB.act(\'ov\')">✏️ رسم فوق المنصة</button></div>'
  +'<p class="wb-hint">'+(hasDisp?'🖥️ <b>تسجيل المنصة كاملة:</b> المتصفح هيسألك تختار الشاشة — اختار <b>«هذا التبويب»</b> وفعّل «مشاركة صوت التبويب». بعدها تقدر تنتقل لأي أداة في المنصة (محاكاة 3D، حاسبات، اختبار…) وكل ده بيتسجّل مع صوتك والكاميرا، وشريط تحكم صغير بيظهر فوق كل الصفحات.':'⚠️ جهازك لا يدعم تسجيل الشاشة كاملة، فالتسجيل هيكون للسبورة فقط.')+'<br>🧑‍🏫 <b>تسجيل السبورة فقط:</b> بيسجّل السبورة + الكاميرا + الصوت في ركن الفيديو، ويشتغل على كل الأجهزة.</p>'
  +'</div>'
- +'<div id="wbArcPane" hidden><div id="wbArc"><p class="sub">جارٍ التحميل…</p></div><p class="wb-hint">💾 الأرشيف محفوظ على هذا الجهاز وهذا المتصفح. <span id="wbEst"></span></p></div></div>'};
+ +'<div id="wbArcPane" hidden><div id="wbArc"><p class="sub">جارٍ التحميل…</p></div><p class="wb-hint">🎞️ المحاضرات للمشاهدة فقط على المنصة. <span id="wbEst"></span></p></div></div>'};
 function mount(){
  var cw=q('#wbCW');if(!cw)return;cw.appendChild(cv);
  var f=q('#wbFile');if(f)f.onchange=function(){if(f.files&&f.files[0])addImg(f.files[0]);f.value=''};var fp=q('#wbPdf');if(fp)fp.onchange=function(){if(fp.files&&fp.files[0])addPdf(fp.files[0]);fp.value=''};
