@@ -2568,7 +2568,7 @@ h1#ttl small{-webkit-text-fill-color:var(--mute);animation:ttin .7s both}
 if(location.hash==="#login-preview"){S.remove();document.documentElement.classList.remove("sp-on");return}
 document.body.style.overflow="hidden";
 const end=()=>{document.documentElement.classList.remove("sp-on");S.classList.add("out");document.body.style.overflow="";setTimeout(()=>S.remove(),700)};
-q("#ssb").onclick=()=>{end();window.MODOGATE&&MODOGATE.open("r")};q("#shv").onclick=()=>{end();window.MODOGATE&&MODOGATE.open("l")};q("#sgv").onclick=()=>{end();window.MODOGATE&&MODOGATE.open("g")};
+q("#ssb").onclick=()=>{end();window.MODOGATE&&MODOGATE.open("r")};q("#shv").onclick=()=>{end();window.MODOGATE&&MODOGATE.open("l")};q("#sgv").onclick=()=>{if(document.getElementById("sgvSoon"))return;const o=document.createElement("div");o.id="sgvSoon";o.setAttribute("dir","rtl");o.style.cssText="position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(10,20,40,.78);backdrop-filter:blur(6px);font-family:inherit";o.innerHTML='<div style="max-width:380px;width:100%;background:#fff;border-radius:22px;padding:30px 22px;text-align:center;box-shadow:0 20px 60px #0006"><div style="font-size:3.2rem">⏳</div><h2 style="margin:10px 0 6px;color:#1b2f55;font-size:1.5rem">ستظهر قريبا</h2><p style="margin:0 0 18px;color:#35507a;font-size:1.15rem;font-weight:700">انتظروووونا 💙</p><button id="sgvBack" style="border:0;border-radius:14px;padding:12px 30px;font:inherit;font-weight:800;font-size:1rem;cursor:pointer;background:linear-gradient(90deg,#2f8cf0,#4fd1b0);color:#fff">رجوع</button></div>';document.body.appendChild(o);o.querySelector("#sgvBack").onclick=()=>o.remove()};
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.getElementById("spl")&&!S.classList.contains("out")){end();if(window.MODOGATE&&!MODOGATE.authed())MODOGATE.open()}})})();
 </script>
 <script>
@@ -7451,6 +7451,29 @@ window.FXE={start:start,ask:ask,exit:exitEx,feed:feed,skip:skip,home:function(){
   var o=r1.apply(this,arguments);
   try{if(guest()){var c=document.getElementById('chips');if(c)c.innerHTML=''}}catch(e){}
   return o};
+})();
+</script>
+<script id="wb-platform-lock">
+/* قفل السبورة التفاعلية لمشتركي المنصة (مؤقتًا) — لتغيير الباسورد عدّل PW، ولإلغاء القفل احذف هذا الـ script */
+(function(){
+var PW='123',unlocked=false,asking=false,h=document.documentElement;
+function guest(){return h.classList.contains('tier-review')}
+function need(){return !unlocked&&!guest()}
+function ask(cb){if(asking)return;asking=true;var o=document.createElement('div');o.setAttribute('dir','rtl');o.style.cssText='position:fixed;inset:0;z-index:2147483646;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(10,20,40,.78);backdrop-filter:blur(6px)';
+o.innerHTML='<div style="max-width:360px;width:100%;background:var(--card,#fff);color:var(--ink,#1b2f55);border-radius:20px;padding:26px 20px;text-align:center;box-shadow:0 20px 60px #0006"><div style="font-size:2.6rem">🔒</div><h3 style="margin:6px 0">السبورة التفاعلية</h3><p style="margin:0 0 6px;opacity:.8">اكتب الرقم السري للدخول</p><input type="password" id="wpPw" inputmode="numeric" autocomplete="off" style="width:100%;margin:8px 0;border:1px solid #9fc3f0;background:var(--bg,#f4f8ff);color:inherit;border-radius:10px;padding:10px 12px;font:inherit;text-align:center;letter-spacing:6px;box-sizing:border-box"><p id="wpE" style="color:#d33;margin:0 0 8px;min-height:1.4em;font-weight:700"></p><div style="display:flex;gap:8px;justify-content:center"><button id="wpOk" style="border:0;border-radius:12px;padding:10px 24px;font:inherit;font-weight:800;cursor:pointer;background:linear-gradient(90deg,#2f8cf0,#4fd1b0);color:#fff">دخول</button><button id="wpNo" style="border:1px solid #9fc3f0;border-radius:12px;padding:10px 20px;font:inherit;cursor:pointer;background:transparent;color:inherit">إلغاء</button></div></div>';
+document.body.appendChild(o);var i=o.querySelector('#wpPw');i.focus();
+function close(g){asking=false;o.remove();cb(g)}
+function chk(){if(i.value.trim()===PW){unlocked=true;close(true)}else{o.querySelector('#wpE').textContent='الرقم السري غير صحيح ❌';i.value='';i.focus()}}
+o.querySelector('#wpOk').onclick=chk;o.querySelector('#wpNo').onclick=function(){close(false)};
+i.onkeydown=function(e){if(e.key==='Enter')chk();else if(e.key==='Escape')close(false)}}
+var g0=window.go;
+if(typeof g0==='function')window.go=function(v){
+ if(v==='wb'&&need()){var a=arguments,t=this;ask(function(ok){if(ok)g0.apply(t,a)});return}
+ return g0.apply(this,arguments)};
+var r0=window.render;
+if(typeof r0==='function')window.render=function(){
+ try{if(typeof st!=='undefined'&&st.v==='wb'&&need()){st.v='home';ask(function(ok){if(ok){try{go('wb')}catch(e){}}})}}catch(e){}
+ return r0.apply(this,arguments)};
 })();
 </script>
 </body></html>
