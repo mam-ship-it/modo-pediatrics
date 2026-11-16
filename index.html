@@ -3161,10 +3161,10 @@ function ext(t){return/mp4/.test(t||'')?'mp4':'webm'}
 function saveDlg(blob,dur,th,parts){parts=parts||[{blob:blob,dur:dur}];var tsz=parts.reduce(function(a,p){return a+p.blob.size},0);
  var u=URL.createObjectURL(blob),def='محاضرة '+new Date().toLocaleDateString('ar-EG');
  var o=modal('<h3>✅ انتهى التسجيل</h3><p class="sub" style="margin:0 0 8px">المدة '+fmt(dur)+' · الحجم '+mb(tsz)+(parts.length>1?' · '+parts.length+' أجزاء (التسجيل طويل فاتقسّم تلقائيًا)':'')+'</p><video controls controlslist="nodownload noremoteplayback" disablepictureinpicture disableremoteplayback oncontextmenu="return false" playsinline data-u="'+u+'" src="'+u+'"></video><input type="text" id="wbTitle" maxlength="90" value="'+esc(def)+'"><div class="row"><button class="pri" id="wbSv">💾 حفظ في الأرشيف</button><button id="wbDs">🗑 تجاهل</button></div>');
- vidFix(q('video',o));
+ vidFix(q('video',o));if(WB.appendTo)q('#wbSv',o).textContent='➕ إضافة للمحاضرة';
  function title(){return(q('#wbTitle',o).value||def).trim()}
   q('#wbDs',o).onclick=function(){if(confirm('تجاهل التسجيل نهائيًا؟'))o.close()};
- q('#wbSv',o).onclick=function(){var b=this;
+ q('#wbSv',o).onclick=function(){var b=this;if(WB.appendTo)return appendRec(b,o,parts);
   clAdmin().then(function(ok){if(!ok)return;b.disabled=true;b.textContent='جارٍ الرفع… 0%';
    clUpload(parts,{title:title(),thumb:th},function(p){b.textContent='جارٍ الرفع… '+p+'%'}).then(function(){
     o.close();toast('اترفع على المنصة ✅ الطلاب هيشوفوه');WB.tab='arc';try{if(st.v==='wb')WB.show('arc');else go('wb')}catch(e){go('wb')}
@@ -3231,35 +3231,9 @@ WB.up=function(id){clAdmin().then(function(ok){if(!ok)return;idbGet(id).then(fun
  clUpload(parts,{title:r.title,thumb:r.thumb},function(p){if(b)b.textContent=p+'%'}).then(function(){idbDel(id).then(function(){toast('اترفع للمنصة ✅');arcRender()})}).catch(function(e){if(b){b.disabled=false;b.textContent='☁️'}alert('تعذّر الرفع: '+(e&&e.message))})})})};
 WB.q=function(v){CL.flt=(v||'').trim().toLowerCase();drawArc()};
 /* ---- المشغّل: أجزاء متتابعة + استكمال + سرعة + علامة مائية + روابط قصيرة العمر بتتجدد تلقائيًا ---- */
-WB.play=function(id){clFn({a:'play',id:id}).then(function(r){if(!r.ok){alert(r.err==='auth'?'سجّل دخول بكودك الأول عشان تشاهد المحاضرة.':'تعذّر تشغيل المحاضرة.');return}
- var P={parts:r.parts,off:[],tot:0,idx:0,rate:1,seek:null,keep:false,live:true,lastErr:0};
- r.parts.forEach(function(p){P.off.push(P.tot);P.tot+=p.dur||0});
- var start=0;if(r.prog&&!r.prog.done&&r.prog.pos>5&&P.tot&&r.prog.pos<P.tot-10)start=r.prog.pos;
- var o=modal('<h3>'+esc(r.title)+'</h3><div class="wb-pl" id="wbPl"><video controls controlslist="nodownload noremoteplayback nofullscreen" disablepictureinpicture disableremoteplayback oncontextmenu="return false" playsinline autoplay></video><div class="wb-wm"></div><div class="wb-wm"></div></div><div class="wb-pc"><span>السرعة:</span>'+[.75,1,1.25,1.5,2].map(function(x){return'<button data-r="'+x+'"'+(x===1?' class="on"':'')+'>'+x+'×</button>'}).join('')+'<button id="wbFs">⛶ ملء الشاشة</button></div>'+(start?'<p class="sub" style="margin:6px 0 0">▶ كملنا من الدقيقة '+Math.floor(start/60)+'</p>':'')+'<div class="row" style="margin-top:10px"><button id="wbX">إغلاق</button></div>');
- var v=q('video',o),pl=q('#wbPl',o),wms=pl.querySelectorAll('.wb-wm');
- function load(i,t){P.idx=i;P.seek=t||0;v.src=P.parts[i].url}
- function gpos(){return(P.off[P.idx]||0)+(v.currentTime||0)}
- function rep(fin){clFn({a:'prog',id:id,pos:Math.round(gpos()),sec:15,done:!!fin||(P.tot>0&&gpos()>=P.tot*.9)})}
- v.onloadedmetadata=function(){if(P.seek){try{v.currentTime=P.seek}catch(e){}P.seek=0}v.playbackRate=P.rate;if(P.keep){P.keep=false;v.play().catch(function(){})}};
- v.onended=function(){if(P.idx<P.parts.length-1){P.keep=true;load(P.idx+1,0)}else rep(true)};
- function refresh(){clFn({a:'play',id:id,refresh:1}).then(function(n){if(!n.ok||!P.live)return;var t=v.currentTime,pp=!v.paused;P.parts=n.parts;P.seek=t;P.keep=pp;v.src=P.parts[P.idx].url})}
- v.onerror=function(){if(Date.now()-P.lastErr>20000){P.lastErr=Date.now();refresh()}};
- var i0=0;for(var k=0;k<P.off.length;k++)if(start>=P.off[k])i0=k;
- load(i0,start-(P.off[i0]||0));
- var t1=setInterval(function(){if(!v.paused&&!v.ended)rep()},15000),t2=setInterval(refresh,Math.max(60,(r.ttl||900)-300)*1000);
- function wm(){[].forEach.call(wms,function(n,k){n.textContent=r.who;n.style.top=(8+Math.random()*80)+'%';n.style.left=(2+Math.random()*60)+'%'})}
- wm();var t3=setInterval(wm,5000);
- [].forEach.call(o.querySelectorAll('.wb-pc [data-r]'),function(b){b.onclick=function(){P.rate=+b.dataset.r;v.playbackRate=P.rate;[].forEach.call(o.querySelectorAll('.wb-pc [data-r]'),function(x){x.classList.toggle('on',x===b)})}});
- function fs(){var f=pl.requestFullscreen||pl.webkitRequestFullscreen;if(f)f.call(pl)}
- q('#wbFs',o).onclick=fs;
- function fsh(){var e=document.fullscreenElement;if(e&&e.tagName==='VIDEO'){try{document.exitFullscreen()}catch(_){}fs()}}
- document.addEventListener('fullscreenchange',fsh);
- v.addEventListener('dblclick',function(e){e.preventDefault()});
- var oc=o.close;o.close=function(){if(!P.live)return;P.live=false;try{rep()}catch(e){}clearInterval(t1);clearInterval(t2);clearInterval(t3);document.removeEventListener('fullscreenchange',fsh);try{if(document.fullscreenElement)document.exitFullscreen()}catch(e){}oc();setTimeout(arcRender,400)};
- q('#wbX',o).onclick=function(){o.close()};o.addEventListener('click',function(e){if(e.target===o)o.close()})})};
 function arcCard(x){var pr=x.prog,pc=pr&&x.dur?Math.min(100,Math.round(pr.pos/x.dur*100)):0,ac='<button title="تشغيل" onclick="WB.play(\''+x.id+'\')">▶</button>';
  var bd=(pr&&pr.done?'<span class="wb-bdg">✓ تمت المشاهدة</span>':'')+(CL.admin&&x.hidden?'<span class="wb-bdg w">🙈 مخفية</span>':'')+(CL.admin&&x.scheduled?'<span class="wb-bdg w">🕒 تُنشر '+new Date(x.publish_at).toLocaleString('ar-EG',{day:'numeric',month:'numeric',hour:'numeric',minute:'numeric'})+'</span>':'');
- var ad=CL.admin?'<div class="ac2"><button title="تغيير الاسم" onclick="WB.ren(\''+x.id+'\',this.dataset.t)" data-t="'+esc(x.title)+'">✏️</button><button title="'+(x.hidden?'إظهار':'إخفاء')+'" onclick="WB.hide(\''+x.id+'\','+(x.hidden?'false':'true')+')">'+(x.hidden?'👁':'🙈')+'</button><button title="جدولة النشر" onclick="WB.sch(\''+x.id+'\','+(x.publish_at?'\''+x.publish_at+'\'':'null')+')">🕒</button><button title="تثبيت في الأول" onclick="WB.pin(\''+x.id+'\')">📌</button><button title="لفوق" onclick="WB.mv(\''+x.id+'\',-1)">⬆</button><button title="لتحت" onclick="WB.mv(\''+x.id+'\',1)">⬇</button><button title="المشاهدات" onclick="WB.st(\''+x.id+'\',this.dataset.t)" data-t="'+esc(x.title)+'">📊 '+((x.stats&&x.stats.viewers)||0)+'/'+((x.stats&&x.stats.views)||0)+'</button><button title="حذف" onclick="WB.del(\''+x.id+'\')">🗑</button></div>':'';
+ var ad=CL.admin?'<div class="ac2"><button title="تغيير الاسم" onclick="WB.ren(\''+x.id+'\',this.dataset.t)" data-t="'+esc(x.title)+'">✏️</button><button title="'+(x.hidden?'إظهار':'إخفاء')+'" onclick="WB.hide(\''+x.id+'\','+(x.hidden?'false':'true')+')">'+(x.hidden?'👁':'🙈')+'</button><button title="جدولة النشر" onclick="WB.sch(\''+x.id+'\','+(x.publish_at?'\''+x.publish_at+'\'':'null')+')">🕒</button><button title="تثبيت في الأول" onclick="WB.pin(\''+x.id+'\')">📌</button><button title="لفوق" onclick="WB.mv(\''+x.id+'\',-1)">⬆</button><button title="لتحت" onclick="WB.mv(\''+x.id+'\',1)">⬇</button><button title="المشاهدات" onclick="WB.st(\''+x.id+'\',this.dataset.t)" data-t="'+esc(x.title)+'">📊 '+((x.stats&&x.stats.viewers)||0)+'/'+((x.stats&&x.stats.views)||0)+'</button><button title="حذف" onclick="WB.del(\''+x.id+'\')">🗑</button><button title="تعديل الفيديو (قص / إضافة)" onclick="WB.edit(\''+x.id+'\')">✂️</button></div>':'';
  return'<div class="wb-card"><div class="th"'+(x.thumb?' style="background-image:url('+x.thumb+')"':'')+'><span class="du">'+fmt((x.dur||0)*1000)+'</span></div><div class="bd"><b>'+esc(x.title)+'</b><small>'+new Date(x.created_at).toLocaleString('ar-EG')+' · '+mb(x.size||0)+(x.nparts>1?' · '+x.nparts+' أجزاء':'')+'</small><div>'+bd+'</div>'+(pc&&!(pr&&pr.done)?'<div class="wb-pg"><i style="width:'+pc+'%"></i></div>':'')+'<div class="ac">'+ac+'</div>'+ad+'</div></div>'}
 function drawArc(){var g=q('#wbGrid');if(!g)return;var f=CL.flt,L=CL.list.filter(function(x){return!f||String(x.title).toLowerCase().indexOf(f)>=0});
  g.innerHTML=CL.list.length?(L.length?'<div class="wb-arc">'+L.map(arcCard).join('')+'</div>':'<p class="sub">مفيش محاضرة بالاسم ده.</p>'):'<p class="sub">لسه مفيش محاضرات في الأرشيف.</p>'}
@@ -3272,6 +3246,171 @@ function arcRender(){
   var h='<div style="display:flex;gap:8px;margin-bottom:10px;align-items:center"><input class="wb-qs" id="wbQs" type="search" placeholder="🔍 دوّر على محاضرة بالاسم…" value="'+esc(CL.flt)+'" oninput="WB.q(this.value)">'+(CL.admin?'<span class="wb-bdg" style="white-space:nowrap;font-size:.8rem;padding:6px 10px">✅ وضع المحاضر مفعّل</span><button onclick="WB.out()" style="white-space:nowrap">خروج</button>':'<button onclick="WB.adm()" style="opacity:.6;white-space:nowrap">🔑 دخول المحاضر</button>')+'</div><div id="wbGrid"></div>';
   if(CL.admin&&loc.length)h+='<h4 style="margin:16px 0 6px">محاضرات على هذا الجهاز فقط (ارفعها عشان الطلاب تشوفها)</h4><div class="wb-arc">'+loc.map(function(x){return'<div class="wb-card"><div class="th"'+(x.thumb?' style="background-image:url('+x.thumb+')"':'')+'><span class="du">'+fmt(x.dur||0)+'</span></div><div class="bd"><b>'+esc(x.title)+'</b><small>'+mb(x.size||0)+'</small><div class="ac"><button id="wbU'+x.id+'" title="رفع للمنصة" onclick="WB.up('+x.id+')">☁️</button></div></div></div>'}).join('')+'</div>';
   box.innerHTML=h;drawArc();var est=q('#wbEst');if(est)est.textContent=''})}
+
+/* ================= محرك تشغيل قائمة المقاطع (EDL) — فيديوهين بالتبادل = انتقال بدون فجوة ================= */
+function cDur(c,P){return Math.max(0,((c.o==null?(P[c.p]&&P[c.p].dur)||0:c.o)-c.i)/(c.s||1))}
+function mergeC(cl){var r=[];cl.forEach(function(c){var l=r[r.length-1];if(l&&l.p===c.p&&l.s===c.s&&l.m===c.m&&l.o!=null&&Math.abs(c.i-l.o)<.05)r[r.length-1]=Object.assign({},l,{o:c.o});else r.push(Object.assign({},c))});return r}
+function Eng(host,parts,clips){
+ var E={rate:1,mute:false,P:parts,C:[],S:[],T:0,k:0,cur:0,want:false},V=[],raf=0,lt=0;
+ function plan(cl){E.C=mergeC(cl);E.S=[];var t=0;E.C.forEach(function(c){E.S.push(t);t+=cDur(c,E.P)});E.T=t}
+ function url(c){var p=E.P[c.p];return p&&p.url}
+ function setSrc(v,u,t,then){function go(){try{v.currentTime=t}catch(e){}if(then)then()}
+  if(v.dataset.u===u&&v.readyState>=1)return go();
+  if(v.dataset.u!==u){v.dataset.u=u;v.src=u}
+  v.addEventListener('loadedmetadata',function f(){v.removeEventListener('loadedmetadata',f);go()})}
+ function apply(v,c){if(!c)return;v.playbackRate=Math.min(16,Math.max(.0625,(c.s||1)*E.rate));v.muted=!!(c.m||E.mute)}
+ function show(i){V.forEach(function(v,j){v.style.opacity=j===i?1:0;if(j!==i)v.pause()})}
+ function arm(k){var c=E.C[k],w=V[1-E.cur];if(c&&url(c))setSrc(w,url(c),c.i)}
+ function adv(){var k=E.k+1;
+  if(k>=E.C.length){E.want=false;V[E.cur].pause();if(E.onend)E.onend();return}
+  var c=E.C[k],u=url(c);if(!u){E.k=k;return adv()}
+  var w=V[1-E.cur];
+  if(w.dataset.u===u&&w.readyState>=2&&Math.abs(w.currentTime-c.i)<.6){E.cur=1-E.cur;E.k=k;apply(w,c);show(E.cur);if(E.want)w.play().catch(function(){});arm(k+1)}
+  else E.load(k,0,E.want)}
+ for(var n=0;n<2;n++){var v=document.createElement('video');v.setAttribute('playsinline','');v.playsInline=true;v.preload='auto';v.className='wbe-v';v.style.opacity=n?0:1;
+  v.addEventListener('ended',function(e){if(e.target===V[E.cur])adv()});
+  v.addEventListener('error',function(e){if(e.target===V[E.cur]&&E.onerror)E.onerror()});host.appendChild(v);V.push(v)}
+ E.load=function(k,t,play){var c=E.C[k];if(!c)return;E.k=k;var v=V[E.cur],u=url(c);
+  if(!u){if(k+1<E.C.length)return E.load(k+1,0,play);return E.pause()}
+  show(E.cur);apply(v,c);E.want=!!play;
+  setSrc(v,u,c.i+t*(c.s||1),function(){apply(v,c);if(E.want)v.play().catch(function(){})});arm(k+1)};
+ E.pos=function(){var c=E.C[E.k];if(!c)return 0;return Math.max(0,Math.min(E.T,E.S[E.k]+(V[E.cur].currentTime-c.i)/(c.s||1)))};
+ E.seek=function(T,play){T=Math.max(0,Math.min(T,Math.max(0,E.T-.05)));var k=0;for(var j=0;j<E.C.length;j++)if(E.S[j]<=T+1e-6)k=j;E.load(k,T-E.S[k],play===undefined?E.want:play)};
+ E.play=function(){if(E.pos()>=E.T-.1)return E.seek(0,true);E.want=true;V[E.cur].play().catch(function(){})};
+ E.pause=function(){E.want=false;V[E.cur].pause()};
+ E.toggle=function(){E.want?E.pause():E.play()};
+ E.setRate=function(r){E.rate=r;apply(V[E.cur],E.C[E.k])};
+ E.setMute=function(b){E.mute=b;apply(V[E.cur],E.C[E.k])};
+ E.setClips=function(cl){var T=E.pos(),w=E.want;plan(cl);E.seek(T,w)};
+ E.setParts=function(p){var T=E.pos(),w=E.want;E.P=p;plan(E.C);V.forEach(function(v){v.dataset.u=''});E.seek(T,w)};
+ E.destroy=function(){cancelAnimationFrame(raf);V.forEach(function(v){try{v.pause();v.removeAttribute('src');v.load()}catch(e){}v.remove()})};
+ (function loop(){raf=requestAnimationFrame(loop);var c=E.C[E.k],v=V[E.cur];if(!c)return;
+  if(E.want&&c.o!=null&&v.currentTime>=c.o-.04)adv();
+  var now=performance.now();if(E.ontime&&now-lt>100){lt=now;E.ontime(E.pos())}})();
+ plan(clips);return E}
+
+/* ================= المشغّل (الطلاب + المحاضر): بيطبّق قائمة القص والسرعة والكتم ================= */
+WB.play=function(id){clFn({a:'play',id:id}).then(function(r){if(!r.ok){alert(r.err==='auth'?'سجّل دخول بكودك الأول عشان تشاهد المحاضرة.':'تعذّر تشغيل المحاضرة.');return}
+ var o=modal('<h3>'+esc(r.title)+'</h3><div class="wb-pl wbe-box" id="wbPl"><div class="wb-wm"></div><div class="wb-wm"></div></div><div class="wbe-tr" style="margin-top:8px"><button id="wbPp">⏸</button><input type="range" id="wbSk" min="0" max="1000" value="0"><span id="wbTm" dir="ltr">00:00</span></div><div class="wb-pc"><span>السرعة:</span>'+[.75,1,1.25,1.5,2].map(function(x){return'<button data-r="'+x+'"'+(x===1?' class="on"':'')+'>'+x+'×</button>'}).join('')+'<button id="wbFs">⛶ ملء الشاشة</button></div><div class="row" style="margin-top:10px"><button id="wbX">إغلاق</button></div>');
+ var pl=q('#wbPl',o),wms=pl.querySelectorAll('.wb-wm'),live=true,drag=false,lastErr=0,sk=q('#wbSk',o),tm=q('#wbTm',o),pp=q('#wbPp',o);
+ var E=Eng(pl,r.parts,r.clips);
+ var start=0;if(r.prog&&!r.prog.done&&r.prog.pos>5&&E.T&&r.prog.pos<E.T-10)start=r.prog.pos;
+ if(start){var n=document.createElement('p');n.className='sub';n.style.margin='6px 0 0';n.textContent='▶ كملنا من الدقيقة '+Math.floor(start/60);o.querySelector('.wbe-tr').before(n)}
+ E.ontime=function(t){if(!drag)sk.value=E.T?Math.round(t/E.T*1000):0;tm.textContent=fmt(t*1000)+' / '+fmt(E.T*1000);pp.textContent=E.want?'⏸':'▶'};
+ E.seek(start,true);
+ function gpos(){return E.pos()}
+ function rep(fin){clFn({a:'prog',id:id,pos:Math.round(gpos()),sec:15,done:!!fin||(E.T>0&&gpos()>=E.T*.9)})}
+ E.onend=function(){rep(true);pp.textContent='▶'};
+ function refresh(){clFn({a:'play',id:id,refresh:1}).then(function(n){if(n.ok&&live)E.setParts(n.parts)})}
+ E.onerror=function(){if(Date.now()-lastErr>20000){lastErr=Date.now();refresh()}};
+ pp.onclick=function(){E.toggle()};pl.addEventListener('click',function(){E.toggle()});
+ sk.oninput=function(){drag=true};sk.onchange=function(){drag=false;E.seek(sk.value/1000*E.T)};
+ var t1=setInterval(function(){if(E.want)rep()},15000),t2=setInterval(refresh,Math.max(60,(r.ttl||900)-300)*1000);
+ function wm(){[].forEach.call(wms,function(n){n.textContent=r.who;n.style.top=(8+Math.random()*80)+'%';n.style.left=(2+Math.random()*60)+'%'})}
+ wm();var t3=setInterval(wm,5000);
+ [].forEach.call(o.querySelectorAll('.wb-pc [data-r]'),function(b){b.onclick=function(){E.setRate(+b.dataset.r);[].forEach.call(o.querySelectorAll('.wb-pc [data-r]'),function(x){x.classList.toggle('on',x===b)})}});
+ q('#wbFs',o).onclick=function(){var f=pl.requestFullscreen||pl.webkitRequestFullscreen;if(f)f.call(pl)};
+ pl.addEventListener('dblclick',function(e){e.preventDefault()});
+ var oc=o.close;o.close=function(){if(!live)return;live=false;try{rep()}catch(e){}clearInterval(t1);clearInterval(t2);clearInterval(t3);E.destroy();try{if(document.fullscreenElement)document.exitFullscreen()}catch(e){}oc();setTimeout(arcRender,400)};
+ q('#wbX',o).onclick=function(){o.close()};o.addEventListener('click',function(e){if(e.target===o)o.close()})})};
+
+/* ================= رفع أجزاء جديدة لمحاضرة موجودة (addparts) ================= */
+var MAXF=49*1024*1024;
+function upParts(id,parts,onp){var type=parts[0].blob.type,total=parts.reduce(function(s,p){return s+p.blob.size},0),done=0,out=[],first;
+ return clFn({a:'play',id:id,raw:true}).then(function(r){if(!r.ok)throw new Error('nf');first=r.parts.length;
+  function step(i){if(i>=parts.length)return clFn({a:'addparts',id:id,parts:out}).then(function(c){if(!c.ok)throw new Error('addparts');return first});
+   return clFn({a:'up',type:type,i:first+i,id:id}).then(function(u){if(!u.ok)throw new Error('up '+(u.msg||''));
+    return clPut(u.url,parts[i].blob,function(l){if(onp)onp(Math.min(99,Math.round((done+l)/total*100)))}).then(function(){done+=parts[i].blob.size;out.push({path:u.path,dur:Math.round((parts[i].dur||0)/1000),size:parts[i].blob.size});return step(i+1)})})}
+  return step(0)})}
+function vdur(f){return new Promise(function(res){var v=document.createElement('video'),u=URL.createObjectURL(f),fin=false;function done(x){if(fin)return;fin=true;URL.revokeObjectURL(u);res(x)}
+ v.preload='metadata';v.muted=true;v.onerror=function(){done(0)};
+ v.onloadedmetadata=function(){if(isFinite(v.duration)&&v.duration>0)done(Math.round(v.duration*1000));else{v.currentTime=1e101;v.ontimeupdate=function(){v.ontimeupdate=null;done(isFinite(v.duration)?Math.round(v.duration*1000):0)}}};
+ v.src=u;setTimeout(function(){done(0)},15000)})}
+function bnr(on){var b=q('#wbApp');if(!on){if(b)b.remove();return}if(b)return;b=document.createElement('div');b.id='wbApp';b.className='wb-toast';b.style.cssText+=';top:auto;bottom:90px';
+ b.innerHTML='🎥 سجّل الجزء الجديد — لما توقف هيتضاف لـ «'+esc(WB.appendTo.title)+'» <button id="wbAx" style="margin-inline-start:8px">إلغاء</button>';document.body.appendChild(b);q('#wbAx',b).onclick=function(){WB.appendTo=null;bnr(false)}}
+function appendRec(b,o,parts){var A=WB.appendTo;b.disabled=true;b.textContent='جارٍ الرفع… 0%';
+ clAdmin().then(function(ok){if(!ok)throw new Error('auth');return upParts(A.id,parts,function(p){b.textContent='جارٍ الرفع… '+p+'%'})}).then(function(first){o.close();WB.appendTo=null;bnr(false);WB.edit(A.id,{draft:A.draft,add:{first:first,n:parts.length,at:A.at}})})
+ .catch(function(e){b.disabled=false;b.textContent='➕ إضافة للمحاضرة';alert('تعذّر الرفع'+(e&&e.message?' ('+e.message+')':''))})}
+
+/* ================= محرر الفيديو (غير مدمّر): قص · تقسيم · حذف جزء · ترتيب · سرعة · كتم · إضافة ================= */
+var ED=null;
+function r2(x){return Math.round(x*100)/100}
+WB.edit=function(id,opt){clAdmin().then(function(ok){if(!ok)return;toast('جارٍ فتح المحرر…');
+ Promise.all([clFn({a:'play',id:id,raw:true}),clFn({a:'play',id:id,refresh:1})]).then(function(rs){var raw=rs[0],cur=rs[1];
+  if(!raw.ok||!cur.ok){alert('تعذّر فتح المحرر');return}
+  var cl=(opt&&opt.draft)||cur.clips.map(function(c){return{p:c.p,i:c.i,o:c.o==null?(raw.parts[c.p].dur||0):c.o,s:c.s||1,m:c.m?1:0}});
+  edOpen(id,raw.title,raw.parts,cl,opt||{})})})};
+function edOpen(id,title,P,cl,opt){
+ if(ED)ED.close(true);
+ var o=document.createElement('div');o.className='wbe';
+ o.innerHTML='<div class="wbe-h"><b>✂️ تعديل: '+esc(title)+'</b><span class="sp"></span><button data-a="un" title="تراجع (Ctrl+Z)">↩️</button><button data-a="re" title="إعادة (Ctrl+Y)">↪️</button><button data-a="rs">🔄 إعادة للأصل</button><button class="pri" data-a="sv">💾 حفظ</button><button data-a="x">✕ إغلاق</button></div>'
+ +'<div class="wbe-box"></div>'
+ +'<div class="wbe-tr"><button data-a="pp" id="ePp">▶</button><input type="range" id="eSk" min="0" max="1000" value="0"><span id="eTm" dir="ltr">00:00 / 00:00</span><select id="eRt" title="سرعة المعاينة"><option>0.5</option><option selected>1</option><option>1.5</option><option>2</option></select></div>'
+ +'<div class="wbe-tl" id="eTl"></div>'
+ +'<div class="wbe-tb"><button data-a="sp">✂️ قسّم هنا (S)</button><button data-a="dc">🗑 احذف المقطع (Del)</button><button data-a="ma">[ علّم بداية الجزء</button><button data-a="mb">] علّم النهاية واحذف الجزء</button><button data-a="l" title="حرّك المقطع لقدّام">⬅</button><button data-a="r" title="حرّك المقطع لورا">➡</button><button data-a="dp">📋 كرّر</button><button data-a="mu" id="eMu">🔇 كتم</button><label>سرعة المقطع <select id="eSp">'+[.25,.5,.75,1,1.25,1.5,2,3,4].map(function(x){return'<option'+(x===1?' selected':'')+'>'+x+'</option>'}).join('')+'</select></label></div>'
+ +'<div class="wbe-tb"><button data-a="fl">📁 إضافة فيديو من الجهاز</button><input type="file" id="eFl" accept="video/webm,video/mp4" hidden><button data-a="ar">🎥 تسجيل جزء جديد</button><span id="eInfo" class="sub"></span></div>'
+ +'<p class="sub" style="margin:0">التعديل غير مدمّر: الأصل محفوظ، وتقدر ترجع له في أي وقت. الأجزاء المحذوفة بالكامل مش بتوصل للطلاب.</p>';
+ document.body.appendChild(o);
+ var E=Eng(q('.wbe-box',o),P,cl),pend=null;
+ ED={id:id,P:P,C:cl,sel:0,u:[],r:[],dirty:!!opt.draft,ma:null,E:E};
+ function geo(){var S=[],t=0;ED.C.forEach(function(c){S.push(t);t+=cDur(c,ED.P)});return{S:S,T:t}}
+ function at(T,g){g=g||geo();for(var k=ED.C.length-1;k>=0;k--)if(T>=g.S[k]-1e-6)return k;return 0}
+ function snap(){ED.u.push(JSON.stringify(ED.C));if(ED.u.length>60)ED.u.shift();ED.r=[];ED.dirty=true}
+ function split(T){var g=geo(),k=at(T,g),c=ED.C[k],d=T-g.S[k];if(d<.15||cDur(c,ED.P)-d<.15)return false;var m=r2(c.i+d*(c.s||1));ED.C.splice(k,1,Object.assign({},c,{o:m}),Object.assign({},c,{i:m}));return true}
+ function applyC(){E.setClips(ED.C);render()}
+ function render(){var g=geo();q('#eTl',o).innerHTML=ED.C.map(function(c,k){var d=cDur(c,ED.P);return'<div class="wbe-b'+(k===ED.sel?' on':'')+(c.m?' mu':'')+'" data-k="'+k+'" style="flex:'+Math.max(d,.5)+' 1 0;min-width:40px"><b>'+(k+1)+'</b><small>'+fmt(d*1000)+(c.s!==1?' · '+c.s+'×':'')+(c.m?' 🔇':'')+'</small></div>'}).join('')+'<i class="wbe-ph" id="ePh"></i>';
+  selUI();tick(E.pos());
+  q('#eInfo',o).textContent=ED.ma!=null?'بداية الجزء المعلَّم: '+fmt(ED.ma*1000):''}
+ function selUI(){var c=ED.C[ED.sel];if(!c)return;[].forEach.call(o.querySelectorAll('.wbe-b'),function(b){b.classList.toggle('on',+b.dataset.k===ED.sel)});q('#eSp',o).value=String(c.s);q('#eMu',o).textContent=c.m?'🔊 شغّل الصوت':'🔇 كتم'}
+ function tick(t){var g=geo(),k=at(t,g);if(E.want&&k!==ED.sel){ED.sel=k;selUI()}
+  q('#eTm',o).textContent=fmt(t*1000)+' / '+fmt(g.T*1000);q('#ePp',o).textContent=E.want?'⏸':'▶';
+  if(!ED.drag)q('#eSk',o).value=g.T?Math.round(t/g.T*1000):0;
+  var bl=q('.wbe-b[data-k="'+k+'"]',o),p=q('#ePh',o);if(bl&&p){var d=cDur(ED.C[k],ED.P)||1,f=Math.min(1,Math.max(0,(t-g.S[k])/d));p.style.left=(bl.offsetLeft+f*bl.offsetWidth)+'px'}}
+ E.ontime=tick;
+ function delRange(A,B){var s=Math.min(A,B),e=Math.max(A,B);if(e-s<.15)return toast('الجزء المعلَّم صغير جدًا');snap();split(e);split(s);var g=geo(),keep=[];ED.C.forEach(function(c,k){if(!(g.S[k]>=s-.02&&g.S[k]+cDur(c,ED.P)<=e+.02))keep.push(c)});
+  if(!keep.length){ED.u.pop();return toast('مينفعش تمسح الفيديو كله')}ED.C=keep;ED.ma=null;ED.sel=Math.min(ED.sel,keep.length-1);applyC();toast('اتمسح الجزء ✅ (تقدر تتراجع)')}
+ function afterAdd(first,n,T){return clFn({a:'play',id:ED.id,raw:true}).then(function(r){if(!r.ok)throw new Error('reload');ED.P=r.parts;E.setParts(r.parts);snap();split(T);var g=geo(),k=ED.C.length,j;for(j=0;j<ED.C.length;j++)if(g.S[j]>=T-.01){k=j;break}
+  var nc=[];for(var x=0;x<n;x++){var p=r.parts[first+x];nc.push({p:first+x,i:0,o:p.dur,s:1,m:0})}ED.C.splice.apply(ED.C,[k,0].concat(nc));ED.sel=k;applyC();E.seek(geo().S[k],false);toast('اتضاف الفيديو للخط الزمني ✅ — اضغط حفظ')})}
+ function save(b){var cl=ED.C.map(function(c){var pd=(ED.P[c.p]||{}).dur||0;return{p:c.p,i:c.i,o:c.o>=pd-.02?null:c.o,s:c.s,m:c.m}});b.disabled=true;
+  clFn({a:'edl',id:ED.id,clips:cl}).then(function(r){b.disabled=false;if(r&&r.ok){ED.dirty=false;toast('اتحفظ التعديل ✅ الطلاب هيشوفوه دلوقتي');arcRender()}else alert('تعذّر الحفظ')})}
+ function pos(){return E.pos()}
+ function act(a,b){var c=ED.C[ED.sel];
+  if(a==='pp')E.toggle();
+  else if(a==='x')ED.close();
+  else if(a==='sv')save(b);
+  else if(a==='un'||a==='re'){var from=a==='un'?ED.u:ED.r,to=a==='un'?ED.r:ED.u;if(!from.length)return;to.push(JSON.stringify(ED.C));ED.C=JSON.parse(from.pop());ED.sel=Math.min(ED.sel,ED.C.length-1);ED.dirty=true;applyC()}
+  else if(a==='rs'){if(!confirm('الرجوع للفيديو الأصلي وإلغاء كل التعديلات المحفوظة؟'))return;clFn({a:'edl',id:ED.id,reset:true}).then(function(r){if(r&&r.ok){ED.dirty=false;ED.close(true);arcRender();WB.edit(id)}else alert('تعذّر الرجوع للأصل')})}
+  else if(a==='sp'){snap();if(!split(pos())){ED.u.pop();return toast('مفيش مكان للتقسيم هنا')}applyC()}
+  else if(a==='dc'){if(ED.C.length<2)return toast('مينفعش تمسح المقطع الوحيد');snap();ED.C.splice(ED.sel,1);ED.sel=Math.min(ED.sel,ED.C.length-1);applyC()}
+  else if(a==='ma'){ED.ma=r2(pos());render();toast('تم تعليم البداية — حرّك للنهاية واضغط «علّم النهاية»')}
+  else if(a==='mb'){if(ED.ma==null)return toast('علّم بداية الجزء الأول');delRange(ED.ma,r2(pos()))}
+  else if(a==='l'||a==='r'){var j=ED.sel+(a==='l'?-1:1);if(j<0||j>=ED.C.length)return;snap();var t=ED.C[j];ED.C[j]=ED.C[ED.sel];ED.C[ED.sel]=t;ED.sel=j;applyC()}
+  else if(a==='dp'){snap();ED.C.splice(ED.sel+1,0,Object.assign({},c));ED.sel++;applyC()}
+  else if(a==='mu'){snap();c.m=c.m?0:1;applyC()}
+  else if(a==='fl')q('#eFl',o).click()
+  else if(a==='ar'){WB.appendTo={id:ED.id,title:title,draft:JSON.parse(JSON.stringify(ED.C)),at:r2(pos())};ED.close(true);bnr(true);try{if(st.v==='wb')WB.show('board');else go('wb')}catch(e){go('wb')}toast('روح للسبورة وابدأ التسجيل 🎬')}}
+ o.addEventListener('click',function(e){var b=e.target.closest('button[data-a]');if(b)act(b.dataset.a,b)});
+ q('#eTl',o).addEventListener('click',function(e){var bl=e.target.closest('.wbe-b');if(!bl)return;var k=+bl.dataset.k,g=geo(),r=bl.getBoundingClientRect(),f=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));ED.sel=k;E.seek(g.S[k]+f*cDur(ED.C[k],ED.P),false);selUI()});
+ q('#eSk',o).oninput=function(){ED.drag=true};q('#eSk',o).onchange=function(){ED.drag=false;E.seek(this.value/1000*geo().T)};
+ q('#eRt',o).onchange=function(){E.setRate(+this.value)};
+ q('#eSp',o).onchange=function(){var c=ED.C[ED.sel];if(!c)return;snap();c.s=+this.value;applyC()};
+ q('#eFl',o).onchange=function(){var f=this.files[0];this.value='';if(!f)return;
+  if(!/^video\/(webm|mp4)/.test(f.type))return toast('الملف لازم يكون webm أو mp4');
+  if(f.size>MAXF)return toast('الملف أكبر من '+Math.round(MAXF/1048576)+' MB — صغّر جودته أو قسّمه الأول');
+  var T=r2(pos()),inf=q('#eInfo',o);inf.textContent='جارٍ قراءة الفيديو…';
+  vdur(f).then(function(ms){if(!ms)throw new Error('مش قادر أقرأ مدة الفيديو');return upParts(ED.id,[{blob:f,dur:ms}],function(p){inf.textContent='جارٍ الرفع… '+p+'%'})}).then(function(first){inf.textContent='';return afterAdd(first,1,T)}).catch(function(e){inf.textContent='';alert('تعذّرت الإضافة'+(e&&e.message?' ('+e.message+')':''))})};
+ function key(e){if(/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;var k=e.key;
+  if(k===' '){e.preventDefault();E.toggle()}else if(k==='s'||k==='S')act('sp');else if(k==='Delete')act('dc');
+  else if(k==='ArrowLeft')E.seek(pos()-1);else if(k==='ArrowRight')E.seek(pos()+1);else if(k==='[')act('ma');else if(k===']')act('mb');
+  else if((e.ctrlKey||e.metaKey)&&(k==='z'||k==='Z')){e.preventDefault();act('un')}else if((e.ctrlKey||e.metaKey)&&(k==='y'||k==='Y')){e.preventDefault();act('re')}}
+ document.addEventListener('keydown',key);
+ function refresh(){clFn({a:'play',id:ED.id,raw:true}).then(function(r){if(r.ok&&ED){ED.P=r.parts;E.setParts(r.parts)}})}
+ var rt=setInterval(refresh,10*60*1000),le=0;E.onerror=function(){if(Date.now()-le>20000){le=Date.now();refresh()}};
+ ED.close=function(force){if(!force&&ED.dirty&&!confirm('في تعديلات مش محفوظة. تقفل من غير حفظ؟'))return;clearInterval(rt);document.removeEventListener('keydown',key);E.destroy();o.remove();ED=null};
+ render();E.seek(0,false);
+ if(opt.add)afterAdd(opt.add.first,opt.add.n,opt.add.at).catch(function(){alert('الجزء اترفع بس تعذّر إضافته للخط الزمني — افتح المحرر تاني')})}
+(function(){var s=document.createElement('style');s.textContent='.wbe{position:fixed;inset:0;z-index:99550;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;gap:8px;padding:10px;direction:rtl;overflow:auto}.wbe button,.wbe select{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 10px;font:inherit;cursor:pointer}.wbe button.pri{background:var(--teal);color:#fff;border-color:var(--teal)}.wbe button:disabled{opacity:.45}.wbe-h,.wbe-tr,.wbe-tb{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.wbe-h .sp{flex:1}.wbe-box{position:relative;aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden;max-height:50vh;width:min(100%,calc(50vh*16/9));margin:0 auto;flex:none}.wbe-box:fullscreen{max-height:none;width:100%;height:100%;aspect-ratio:auto}.wbe-box video.wbe-v{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;max-height:none;background:#000;display:block}.wbe-tr input[type=range]{flex:1;min-width:120px;accent-color:var(--teal)}.wbe-tl{position:relative;display:flex;gap:2px;direction:ltr;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px;min-height:58px;flex:none}.wbe-b{background:#2a6fdb33;border:2px solid #2a6fdb;border-radius:6px;padding:4px 6px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;font-size:.8rem}.wbe-b.on{border-color:var(--teal);background:#0f9f8744}.wbe-b.mu{opacity:.75}.wbe-ph{position:absolute;top:2px;bottom:2px;width:2px;background:#e0405a;pointer-events:none;box-shadow:0 0 4px #e0405a}.wbe-tb label{display:flex;gap:6px;align-items:center}';document.head.appendChild(s)})();
+
 
 /* ---------- floating dock (visible on every page while recording / annotating) ---------- */
 function dockEnsure(){
